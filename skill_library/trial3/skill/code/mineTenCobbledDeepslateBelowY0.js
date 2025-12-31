@@ -15,5 +15,5 @@ async function mineTenCobbledDeepslateBelowY0(bot) {
 
   // Mine 10 cobbled_deepslate blocks
   await mineBlock(bot, "cobbled_deepslate", 10);
-  bot.chat("10 cobbled_deepslate mined below Y=0.");
+//   bot.chat("10 cobbled_deepslate mined below Y=0.");
 }

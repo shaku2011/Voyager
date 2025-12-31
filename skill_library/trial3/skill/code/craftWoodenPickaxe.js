@@ -25,5 +25,5 @@ async function craftWoodenPickaxe(bot) {
 
   // Craft a wooden pickaxe using oak planks and sticks with the crafting table
   await craftItem(bot, "wooden_pickaxe", 1, craftingTablePosition);
-  bot.chat("Wooden pickaxe crafted.");
+//   bot.chat("Wooden pickaxe crafted.");
 }

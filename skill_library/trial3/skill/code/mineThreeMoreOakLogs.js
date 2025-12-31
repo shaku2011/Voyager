@@ -8,10 +8,10 @@ async function mineThreeMoreOakLogs(bot) {
       return oakLog;
     });
     if (!oakLogBlock) {
-      bot.chat("Could not find an oak log.");
+//       bot.chat("Could not find an oak log.");
       return;
     }
     await mineBlock(bot, "oak_log", 1);
   }
-  bot.chat("3 more oak logs mined.");
+//   bot.chat("3 more oak logs mined.");
 }

@@ -11,18 +11,18 @@ async function obtainOneMoreAcaciaLog(bot) {
       });
     });
     if (!acaciaLog) {
-      bot.chat("Could not find an acacia log.");
+//       bot.chat("Could not find an acacia log.");
       return;
     }
     await mineBlock(bot, "acacia_log", 1);
-    bot.chat("1 more acacia log obtained.");
+//     bot.chat("1 more acacia log obtained.");
   }
 
   // Check the final number of acacia logs in the inventory
   const finalAcaciaLogs = bot.inventory.count(mcData.itemsByName.acacia_log.id);
   if (finalAcaciaLogs >= 5) {
-    bot.chat("Successfully obtained 5 acacia logs.");
+//     bot.chat("Successfully obtained 5 acacia logs.");
   } else {
-    bot.chat("Failed to obtain 5 acacia logs.");
+//     bot.chat("Failed to obtain 5 acacia logs.");
   }
 }

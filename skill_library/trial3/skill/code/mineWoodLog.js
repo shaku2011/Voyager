@@ -13,11 +13,11 @@ async function mineWoodLog(bot) {
     return null;
   });
   if (!logBlock) {
-    bot.chat("Could not find a wood log.");
+//     bot.chat("Could not find a wood log.");
     return;
   }
 
   // Mine the wood log block
   await mineBlock(bot, logBlock.name, 1);
-  bot.chat("Wood log mined.");
+//   bot.chat("Wood log mined.");
 }

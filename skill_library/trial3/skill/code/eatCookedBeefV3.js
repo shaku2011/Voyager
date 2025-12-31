@@ -5,5 +5,5 @@ async function eatCookedBeef(bot) {
 
   // Consume the cooked beef
   await bot.consume();
-  bot.chat("1 cooked beef eaten.");
+//   bot.chat("1 cooked beef eaten.");
 }

@@ -5,9 +5,9 @@ async function craftIronLeggingsAndBoots(bot) {
   // If not enough iron ingots, mine iron ores and smelt them into iron ingots
   if (ironIngotsCount < 11) {
     await mineBlock(bot, "iron_ore", 11 - ironIngotsCount);
-    bot.chat("Collected iron ores.");
+//     bot.chat("Collected iron ores.");
     await smeltItem(bot, "iron_ore", "coal", 11 - ironIngotsCount);
-    bot.chat("Smelted iron ores into iron ingots.");
+//     bot.chat("Smelted iron ores into iron ingots.");
   }
 
   // Place the crafting table near the bot
@@ -16,9 +16,9 @@ async function craftIronLeggingsAndBoots(bot) {
 
   // Craft iron leggings using the crafting table
   await craftItem(bot, "iron_leggings", 1);
-  bot.chat("Crafted iron leggings.");
+//   bot.chat("Crafted iron leggings.");
 
   // Craft iron boots using the crafting table
   await craftItem(bot, "iron_boots", 1);
-  bot.chat("Crafted iron boots.");
+//   bot.chat("Crafted iron boots.");
 }

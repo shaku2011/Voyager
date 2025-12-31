@@ -6,13 +6,13 @@ async function craftIronSword(bot) {
   // If not enough iron ingots or sticks, collect the required items
   if (ironIngotsCount < 2) {
     await mineBlock(bot, "iron_ore", 2 - ironIngotsCount);
-    bot.chat("Collected iron ores.");
+//     bot.chat("Collected iron ores.");
     await smeltItem(bot, "iron_ore", "coal", 2 - ironIngotsCount);
-    bot.chat("Smelted iron ores into iron ingots.");
+//     bot.chat("Smelted iron ores into iron ingots.");
   }
   if (sticksCount < 1) {
     await craftItem(bot, "stick", 1);
-    bot.chat("Crafted sticks.");
+//     bot.chat("Crafted sticks.");
   }
 
   // Place the crafting table near the bot
@@ -21,5 +21,5 @@ async function craftIronSword(bot) {
 
   // Craft an iron sword using the crafting table
   await craftItem(bot, "iron_sword", 1);
-  bot.chat("Crafted an iron sword.");
+//   bot.chat("Crafted an iron sword.");
 }

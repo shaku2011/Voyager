@@ -5,5 +5,5 @@ async function craftShears(bot) {
 
   // Craft a pair of shears using the crafting table
   await craftItem(bot, "shears", 1);
-  bot.chat("Crafted a pair of shears.");
+//   bot.chat("Crafted a pair of shears.");
 }

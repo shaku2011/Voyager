@@ -5,11 +5,11 @@ async function killTwoPigs(bot) {
 
   // Find and kill the first pig
   await killMob(bot, "pig", 300);
-  bot.chat("Killed the first pig.");
+//   bot.chat("Killed the first pig.");
 
   // Find and kill the second pig
   await killMob(bot, "pig", 300);
-  bot.chat("Killed the second pig.");
+//   bot.chat("Killed the second pig.");
 
   // Collect the dropped items from the killed pigs
   const pigDrops = ["raw_porkchop"];
@@ -22,5 +22,5 @@ async function killTwoPigs(bot) {
       await bot.pathfinder.goto(new GoalBlock(droppedItem.position.x, droppedItem.position.y, droppedItem.position.z));
     }
   }
-  bot.chat("Collected dropped items from the killed pigs.");
+//   bot.chat("Collected dropped items from the killed pigs.");
 }

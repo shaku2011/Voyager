@@ -5,9 +5,9 @@ async function craftBucket(bot) {
   // If not enough iron ingots, mine iron ores and smelt them into iron ingots
   if (ironIngotsCount < 3) {
     await mineBlock(bot, "iron_ore", 3 - ironIngotsCount);
-    bot.chat("Collected iron ores.");
+//     bot.chat("Collected iron ores.");
     await smeltItem(bot, "iron_ore", "coal", 3 - ironIngotsCount);
-    bot.chat("Smelted iron ores into iron ingots.");
+//     bot.chat("Smelted iron ores into iron ingots.");
   }
 
   // Place the crafting table near the bot
@@ -16,5 +16,5 @@ async function craftBucket(bot) {
 
   // Craft a bucket using the crafting table
   await craftItem(bot, "bucket", 1);
-  bot.chat("Crafted a bucket.");
+//   bot.chat("Crafted a bucket.");
 }

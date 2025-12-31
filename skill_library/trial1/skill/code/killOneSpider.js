@@ -11,15 +11,15 @@ async function killOneSpider(bot) {
     return spider;
   });
   if (!spider) {
-    bot.chat("Could not find a spider.");
+//     bot.chat("Could not find a spider.");
     return;
   }
 
   // Kill the spider using the iron sword
   await killMob(bot, "spider", 300);
-  bot.chat("Killed a spider.");
+//   bot.chat("Killed a spider.");
 
   // Collect the dropped items
   await bot.pathfinder.goto(new GoalBlock(spider.position.x, spider.position.y, spider.position.z));
-  bot.chat("Collected dropped items.");
+//   bot.chat("Collected dropped items.");
 }

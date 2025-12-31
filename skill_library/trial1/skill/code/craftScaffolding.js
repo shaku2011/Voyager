@@ -5,7 +5,7 @@ async function craftScaffolding(bot) {
   // If not, craft a crafting table
   if (craftingTableCount === 0) {
     await craftItem(bot, "crafting_table", 1);
-    bot.chat("Crafted a crafting table.");
+//     bot.chat("Crafted a crafting table.");
   }
 
   // Place the crafting table near the bot
@@ -14,5 +14,5 @@ async function craftScaffolding(bot) {
 
   // Craft 10 scaffolding using the crafting table
   await craftItem(bot, "scaffolding", 1);
-  bot.chat("Crafted 10 scaffolding.");
+//   bot.chat("Crafted 10 scaffolding.");
 }

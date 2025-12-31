@@ -5,8 +5,8 @@ async function equipIronChestplate(bot) {
   // Equip the iron chestplate
   if (ironChestplate) {
     await bot.equip(ironChestplate, "torso");
-    bot.chat("Equipped iron chestplate.");
+//     bot.chat("Equipped iron chestplate.");
   } else {
-    bot.chat("Iron chestplate not found in inventory.");
+//     bot.chat("Iron chestplate not found in inventory.");
   }
 }

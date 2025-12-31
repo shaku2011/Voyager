@@ -6,13 +6,13 @@ async function craftIronPickaxe(bot) {
   // If not enough iron ingots or sticks, collect the required items
   if (ironIngotsCount < 3) {
     await mineBlock(bot, "iron_ore", 3 - ironIngotsCount);
-    bot.chat("Collected iron ores.");
+//     bot.chat("Collected iron ores.");
     await smeltItem(bot, "iron_ore", "coal", 3 - ironIngotsCount);
-    bot.chat("Smelted iron ores into iron ingots.");
+//     bot.chat("Smelted iron ores into iron ingots.");
   }
   if (sticksCount < 2) {
     await craftItem(bot, "stick", 1);
-    bot.chat("Crafted sticks.");
+//     bot.chat("Crafted sticks.");
   }
 
   // Place the crafting table near the bot
@@ -21,5 +21,5 @@ async function craftIronPickaxe(bot) {
 
   // Craft an iron pickaxe using the crafting table
   await craftItem(bot, "iron_pickaxe", 1);
-  bot.chat("Crafted an iron pickaxe.");
+//   bot.chat("Crafted an iron pickaxe.");
 }

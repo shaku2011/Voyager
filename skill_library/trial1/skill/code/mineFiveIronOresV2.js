@@ -13,11 +13,11 @@ async function mineFiveIronOres(bot) {
     return ironOres.length >= 5 ? ironOres : null;
   });
   if (!ironOres) {
-    bot.chat("Could not find enough iron ores.");
+//     bot.chat("Could not find enough iron ores.");
     return;
   }
 
   // Mine the 5 iron_ore blocks
   await mineBlock(bot, "iron_ore", 5);
-  bot.chat("5 iron ores mined.");
+//   bot.chat("5 iron ores mined.");
 }
