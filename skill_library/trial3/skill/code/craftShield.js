@@ -9,7 +9,7 @@ async function craftShield(bot) {
   // Check if there are enough iron ingots in the inventory
   const ironIngots = bot.inventory.count(mcData.itemsByName["iron_ingot"].id);
   if (ironIngots < 1) {
-    bot.chat("Not enough iron ingots to craft a shield.");
+//     bot.chat("Not enough iron ingots to craft a shield.");
     return;
   }
 
@@ -19,5 +19,5 @@ async function craftShield(bot) {
 
   // Craft a shield using oak planks and iron ingots with the crafting table
   await craftItem(bot, "shield", 1, craftingTablePosition);
-  bot.chat("Shield crafted.");
+//   bot.chat("Shield crafted.");
 }

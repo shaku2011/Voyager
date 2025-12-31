@@ -5,7 +5,7 @@ async function mineWoodLog(bot) {
     maxDistance: 32
   });
   if (!logBlock) {
-    bot.chat("No wood log found nearby. Exploring...");
+//     bot.chat("No wood log found nearby. Exploring...");
     await exploreUntil(bot, new Vec3(1, 0, 1), 60, () => {
       const foundLog = bot.findBlock({
         matching: block => logNames.includes(block.name),
@@ -15,5 +15,5 @@ async function mineWoodLog(bot) {
     });
   }
   await mineBlock(bot, logBlock.name, 1);
-  bot.chat("Wood log mined.");
+//   bot.chat("Wood log mined.");
 }

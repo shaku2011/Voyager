@@ -6,13 +6,13 @@ async function craftIronShovel(bot) {
   // If not enough iron ingots or sticks, collect the required items
   if (ironIngotsCount < 1) {
     await mineBlock(bot, "iron_ore", 1);
-    bot.chat("Collected iron ore.");
+//     bot.chat("Collected iron ore.");
     await smeltItem(bot, "iron_ore", "coal", 1);
-    bot.chat("Smelted iron ore into iron ingot.");
+//     bot.chat("Smelted iron ore into iron ingot.");
   }
   if (sticksCount < 2) {
     await craftItem(bot, "stick", 1);
-    bot.chat("Crafted sticks.");
+//     bot.chat("Crafted sticks.");
   }
 
   // Find a suitable position to place the crafting table
@@ -27,5 +27,5 @@ async function craftIronShovel(bot) {
 
   // Craft an iron shovel using the crafting table
   await craftItem(bot, "iron_shovel", 1);
-  bot.chat("Crafted an iron shovel.");
+//   bot.chat("Crafted an iron shovel.");
 }

@@ -13,5 +13,5 @@ async function cookPorkchops(bot) {
 
   // Smelt 2 porkchops using the available coal as fuel
   await smeltItem(bot, "porkchop", "coal", 2);
-  bot.chat("2 porkchops cooked.");
+//   bot.chat("2 porkchops cooked.");
 }

@@ -7,7 +7,7 @@ async function plantOakSapling(bot) {
     maxDistance: 32
   });
   if (!targetBlock) {
-    bot.chat("Could not find a suitable location to plant the oak sapling.");
+//     bot.chat("Could not find a suitable location to plant the oak sapling.");
     return;
   }
 
@@ -22,5 +22,5 @@ async function plantOakSapling(bot) {
   await bot.activateBlock(targetBlock);
 
   // Send a chat message to indicate the oak sapling has been planted
-  bot.chat("Oak sapling planted.");
+//   bot.chat("Oak sapling planted.");
 }

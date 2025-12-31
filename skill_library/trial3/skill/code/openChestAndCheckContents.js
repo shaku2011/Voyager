@@ -13,5 +13,5 @@ async function openChestAndCheckContents(bot) {
 
   // Check the contents of the chest
   await checkItemInsideChest(bot, chestPosition);
-  bot.chat("Chest at (5, 61, 134) opened and contents checked.");
+//   bot.chat("Chest at (5, 61, 134) opened and contents checked.");
 }

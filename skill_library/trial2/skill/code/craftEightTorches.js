@@ -6,8 +6,8 @@ async function craftEightTorches(bot) {
   if (!craftingTable) {
     const craftingTablePosition = bot.entity.position.offset(1, 0, 0);
     await placeItem(bot, "crafting_table", craftingTablePosition);
-    bot.chat("Crafting_table placed.");
+//     bot.chat("Crafting_table placed.");
   }
   await craftItem(bot, "torch", 1);
-  bot.chat("8 torches crafted.");
+//   bot.chat("8 torches crafted.");
 }

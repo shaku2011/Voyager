@@ -7,5 +7,5 @@ async function cookThreeRawChicken(bot) {
 
   // Smelt 3 raw chicken using coal as fuel
   await smeltItem(bot, "chicken", "coal", 3);
-  bot.chat("3 raw chicken cooked.");
+//   bot.chat("3 raw chicken cooked.");
 }

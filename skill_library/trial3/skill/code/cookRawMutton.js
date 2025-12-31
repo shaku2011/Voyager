@@ -15,5 +15,5 @@ async function cookRawMutton(bot) {
   await smeltItem(bot, "mutton", "coal", 4);
 
   // Collect the cooked mutton
-  bot.chat("4 raw mutton cooked.");
+//   bot.chat("4 raw mutton cooked.");
 }

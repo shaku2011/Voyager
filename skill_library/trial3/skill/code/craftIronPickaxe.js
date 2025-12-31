@@ -2,7 +2,7 @@ async function craftIronPickaxe(bot) {
   // Check if there are enough iron ingots in the inventory
   const ironIngots = bot.inventory.count(mcData.itemsByName["iron_ingot"].id);
   if (ironIngots < 3) {
-    bot.chat("Not enough iron ingots to craft an iron pickaxe.");
+//     bot.chat("Not enough iron ingots to craft an iron pickaxe.");
     return;
   }
 
@@ -19,5 +19,5 @@ async function craftIronPickaxe(bot) {
 
   // Craft an iron pickaxe using iron ingots and sticks with the crafting table
   await craftItem(bot, "iron_pickaxe", 1, craftingTablePosition);
-  bot.chat("Iron pickaxe crafted.");
+//   bot.chat("Iron pickaxe crafted.");
 }

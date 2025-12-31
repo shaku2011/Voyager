@@ -8,9 +8,9 @@ async function craftChest(bot) {
     const planksToCraft = Math.ceil((8 - oakPlanksCount) / 4);
     if (oakLogsCount >= planksToCraft) {
       await craftItem(bot, "oak_planks", planksToCraft);
-      bot.chat("Crafted oak planks.");
+//       bot.chat("Crafted oak planks.");
     } else {
-      bot.chat("Not enough oak logs to craft oak planks.");
+//       bot.chat("Not enough oak logs to craft oak planks.");
       return;
     }
   }
@@ -21,5 +21,5 @@ async function craftChest(bot) {
 
   // Craft a chest using the crafting table
   await craftItem(bot, "chest", 1);
-  bot.chat("Crafted a chest.");
+//   bot.chat("Crafted a chest.");
 }

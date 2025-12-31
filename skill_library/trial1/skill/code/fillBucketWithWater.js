@@ -8,7 +8,7 @@ async function fillBucketWithWater(bot) {
     return water;
   });
   if (!waterBlock) {
-    bot.chat("Could not find water.");
+//     bot.chat("Could not find water.");
     return;
   }
 
@@ -27,5 +27,5 @@ async function fillBucketWithWater(bot) {
 
   // Activate the bucket to collect water
   await bot.activateItem();
-  bot.chat("Filled the bucket with water.");
+//   bot.chat("Filled the bucket with water.");
 }

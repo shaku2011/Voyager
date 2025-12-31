@@ -8,9 +8,9 @@ async function craftWhiteBed(bot) {
     const planksToCraft = Math.ceil((3 - oakPlanksCount) / 4);
     if (oakLogsCount >= planksToCraft) {
       await craftItem(bot, "oak_planks", planksToCraft);
-      bot.chat("Crafted oak planks.");
+//       bot.chat("Crafted oak planks.");
     } else {
-      bot.chat("Not enough oak logs to craft oak planks.");
+//       bot.chat("Not enough oak logs to craft oak planks.");
       return;
     }
   }
@@ -18,7 +18,7 @@ async function craftWhiteBed(bot) {
   // Check if there are enough white wool in the inventory
   const whiteWoolCount = bot.inventory.count(mcData.itemsByName.white_wool.id);
   if (whiteWoolCount < 3) {
-    bot.chat("Not enough white wool to craft a bed.");
+//     bot.chat("Not enough white wool to craft a bed.");
     return;
   }
 
@@ -28,5 +28,5 @@ async function craftWhiteBed(bot) {
 
   // Craft a white bed using the crafting table
   await craftItem(bot, "white_bed", 1);
-  bot.chat("Crafted a white bed.");
+//   bot.chat("Crafted a white bed.");
 }

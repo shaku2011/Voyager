@@ -23,12 +23,12 @@ async function craftLightningRod(bot) {
   // If not enough copper ingots, mine copper ores and smelt them into copper ingots
   if (copperIngotsCount < 3) {
     await mineBlock(bot, "copper_ore", 3 - copperIngotsCount);
-    bot.chat("Collected copper ores.");
+//     bot.chat("Collected copper ores.");
     await smeltItem(bot, "copper_ore", "coal", 3 - copperIngotsCount);
-    bot.chat("Smelted copper ores into copper ingots.");
+//     bot.chat("Smelted copper ores into copper ingots.");
   }
 
   // Craft a lightning rod using the crafting table
   await craftItem(bot, "lightning_rod", 1);
-  bot.chat("Crafted a lightning rod.");
+//   bot.chat("Crafted a lightning rod.");
 }

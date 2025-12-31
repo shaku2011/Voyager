@@ -13,11 +13,11 @@ async function mineFiveLapisLazuliOres(bot) {
     return lapisOres.length >= 5 ? lapisOres : null;
   });
   if (!lapisOres) {
-    bot.chat("Could not find enough lapis lazuli ores.");
+//     bot.chat("Could not find enough lapis lazuli ores.");
     return;
   }
 
   // Mine the 5 lapis_lazuli_ore blocks
   await mineBlock(bot, "lapis_ore", 5);
-  bot.chat("5 lapis lazuli ores mined.");
+//   bot.chat("5 lapis lazuli ores mined.");
 }

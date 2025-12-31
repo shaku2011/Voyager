@@ -2,7 +2,7 @@ async function exploreCaveAndGatherResources(bot) {
   // Equip torches
   const torches = bot.inventory.findInventoryItem(mcData.itemsByName.torch.id);
   if (!torches) {
-    bot.chat("No torches found in inventory. Crafting torches...");
+//     bot.chat("No torches found in inventory. Crafting torches...");
     await craftTorches(bot);
   }
   await bot.equip(mcData.itemsByName.torch.id, "hand");
@@ -18,10 +18,10 @@ async function exploreCaveAndGatherResources(bot) {
     return caveBlock;
   });
   if (!caveEntrance) {
-    bot.chat("No cave entrance found nearby.");
+//     bot.chat("No cave entrance found nearby.");
     return;
   }
-  bot.chat("Cave entrance found. Exploring the cave...");
+//   bot.chat("Cave entrance found. Exploring the cave...");
 
   // Explore the cave and gather resources
   await exploreUntil(bot, new Vec3(1, 0, 1), 300, () => {
@@ -53,5 +53,5 @@ async function exploreCaveAndGatherResources(bot) {
     return null; // Continue exploring until the time limit is reached
   });
 
-  bot.chat("Finished exploring the cave and gathering resources.");
+//   bot.chat("Finished exploring the cave and gathering resources.");
 }

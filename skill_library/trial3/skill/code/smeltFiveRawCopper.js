@@ -7,5 +7,5 @@ async function smeltFiveRawCopper(bot) {
 
   // Smelt 5 raw copper using coal as fuel
   await smeltItem(bot, "raw_copper", "coal", 5);
-  bot.chat("5 raw copper smelted.");
+//   bot.chat("5 raw copper smelted.");
 }

@@ -4,5 +4,5 @@ async function equipShield(bot) {
 
   // Equip the shield in the off-hand slot
   await bot.equip(shield, "off-hand");
-  bot.chat("Shield equipped.");
+//   bot.chat("Shield equipped.");
 }

@@ -19,7 +19,7 @@ async function killThreeCows(bot) {
   if (sword) {
     await bot.equip(sword, "hand");
   } else {
-    bot.chat("No sword found, using bare hands.");
+//     bot.chat("No sword found, using bare hands.");
   }
 
   // Kill each cow one by one
@@ -28,5 +28,5 @@ async function killThreeCows(bot) {
   }
 
   // Report the completion of the task
-  bot.chat("3 cows killed.");
+//   bot.chat("3 cows killed.");
 }

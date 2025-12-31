@@ -14,5 +14,5 @@ async function mineEightCobblestone(bot) {
 
   // Mine 8 cobblestone
   await mineBlock(bot, "stone", 8);
-  bot.chat("8 cobblestone mined.");
+//   bot.chat("8 cobblestone mined.");
 }

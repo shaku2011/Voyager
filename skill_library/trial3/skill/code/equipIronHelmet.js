@@ -4,5 +4,5 @@ async function equipIronHelmet(bot) {
 
   // Equip the iron helmet in the head slot
   await bot.equip(ironHelmet, "head");
-  bot.chat("Iron helmet equipped.");
+//   bot.chat("Iron helmet equipped.");
 }

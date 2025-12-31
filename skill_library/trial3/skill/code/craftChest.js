@@ -14,5 +14,5 @@ async function craftChest(bot) {
 
   // Craft a chest using oak planks with the crafting table
   await craftItem(bot, "chest", 1, craftingTablePosition);
-  bot.chat("Chest crafted.");
+//   bot.chat("Chest crafted.");
 }

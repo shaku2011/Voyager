@@ -12,8 +12,8 @@ async function equipIronLeggingsAndBoots(bot) {
     await bot.equip(ironBoots, "feet");
 
     // Send a chat message to indicate that the iron leggings and iron boots have been equipped
-    bot.chat("Iron leggings and iron boots equipped.");
+//     bot.chat("Iron leggings and iron boots equipped.");
   } else {
-    bot.chat("Iron leggings and/or iron boots not found in inventory.");
+//     bot.chat("Iron leggings and/or iron boots not found in inventory.");
   }
 }

@@ -15,5 +15,5 @@ async function mineFiveCoalOre(bot) {
 
   // Mine the 5 coal ore blocks
   await mineBlock(bot, "coal_ore", 5);
-  bot.chat("5 coal ore mined.");
+//   bot.chat("5 coal ore mined.");
 }

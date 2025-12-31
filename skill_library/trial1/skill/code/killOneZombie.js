@@ -11,15 +11,15 @@ async function killOneZombie(bot) {
     return zombie;
   });
   if (!zombie) {
-    bot.chat("Could not find a zombie.");
+//     bot.chat("Could not find a zombie.");
     return;
   }
 
   // Kill the zombie using the iron sword
   await killMob(bot, "zombie", 300);
-  bot.chat("Killed a zombie.");
+//   bot.chat("Killed a zombie.");
 
   // Collect the dropped items
   await bot.pathfinder.goto(new GoalBlock(zombie.position.x, zombie.position.y, zombie.position.z));
-  bot.chat("Collected dropped items.");
+//   bot.chat("Collected dropped items.");
 }

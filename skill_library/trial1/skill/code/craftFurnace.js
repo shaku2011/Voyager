@@ -5,7 +5,7 @@ async function craftFurnace(bot) {
   // If not, mine the required cobblestones
   if (cobblestoneCount < 8) {
     await mineBlock(bot, "stone", 8 - cobblestoneCount);
-    bot.chat("Collected cobblestone.");
+//     bot.chat("Collected cobblestone.");
   }
 
   // Place the crafting table near the bot
@@ -14,5 +14,5 @@ async function craftFurnace(bot) {
 
   // Craft a furnace using the crafting table
   await craftItem(bot, "furnace", 1);
-  bot.chat("Crafted a furnace.");
+//   bot.chat("Crafted a furnace.");
 }

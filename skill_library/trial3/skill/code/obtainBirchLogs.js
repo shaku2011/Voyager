@@ -5,8 +5,8 @@ async function obtainBirchLogs(bot) {
   if (logsNeeded > 0) {
     // Mine the required number of birch logs
     await mineBlock(bot, "birch_log", logsNeeded);
-    bot.chat("5 birch logs obtained.");
+//     bot.chat("5 birch logs obtained.");
   } else {
-    bot.chat("Already have 5 birch logs in the inventory.");
+//     bot.chat("Already have 5 birch logs in the inventory.");
   }
 }
