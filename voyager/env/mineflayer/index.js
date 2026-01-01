@@ -22,12 +22,12 @@ const app = express();
 app.use(bodyParser.json({ limit: "50mb" }));
 app.use(bodyParser.urlencoded({ limit: "50mb", extended: false }));
 
-// ===== MOD START: Reconnect + Chat/Command Rate Limit infrastructure =====
+// ===== MOD START: Reconnect + safe chat/command rate limiter =====
 
-// 最後に /start で渡された設定（自動再接続に使う）
-let lastStartOptions = null;
+// last /start body for auto-reconnect
+let lastStartBody = null;
 
-// bot の spawn を待つための Promise
+// ready promise for /step etc.
 let botReadyResolve = null;
 let botReadyReject = null;
 let botReadyPromise = null;
@@ -39,83 +39,23 @@ function resetBotReadyPromise() {
   });
 }
 
-// 再接続バックオフ用
+async function waitForBotReady(timeoutMs = 120000) {
+  if (!botReadyPromise) throw new Error("botReadyPromise is not initialized");
+  const timeout = new Promise((_, reject) =>
+    setTimeout(() => reject(new Error("bot ready timeout")), timeoutMs)
+  );
+  return Promise.race([botReadyPromise, timeout]);
+}
+
+// backoff state
 let reconnectAttempt = 0;
 let reconnectTimer = null;
-let isReconnecting = false;
+let reconnecting = false;
 
-// 送信間隔（スパム対策の要）
-const CHAT_INTERVAL_MS = Number(process.env.BOT_CHAT_INTERVAL_MS || 2500); // まずは強め
-const MAX_BACKOFF_MS = 60000;
+const CHAT_INTERVAL_MS_DEFAULT = Number(process.env.BOT_CHAT_INTERVAL_MS || 2500);
+const BASE_RECONNECT_MS = 5000;
+const MAX_RECONNECT_MS = 60000;
 
-// bot.chat を強制的にキュー送信にする（/give や /tp なども全部ここを通る）
-function installChatRateLimiter(botInstance) {
-  const rawChat = botInstance.chat.bind(botInstance);
-
-  const queue = [];
-  let pumping = false;
-  let lastSentAt = 0;
-
-  async function sleep(ms) {
-    return new Promise((r) => setTimeout(r, ms));
-  }
-
-  async function pump() {
-    if (pumping) return;
-    pumping = true;
-
-    while (queue.length > 0 && botInstance) {
-      const msg = queue.shift();
-
-      // bot が死んでたら破棄
-      if (!botInstance || !botInstance._client) break;
-
-      const now = Date.now();
-      const wait = Math.max(0, CHAT_INTERVAL_MS - (now - lastSentAt));
-      if (wait > 0) await sleep(wait);
-
-      try {
-        rawChat(msg);
-      } catch (e) {
-        console.error("[chat limiter] rawChat failed:", e?.stack || e);
-        // 送信失敗したら一旦中断
-        break;
-      }
-      lastSentAt = Date.now();
-    }
-
-    pumping = false;
-  }
-
-  // ラップ
-  botInstance.chat = (message) => {
-    // 空メッセージ抑制
-    if (message === null || message === undefined) return;
-    const msg = String(message).trim();
-    if (!msg) return;
-
-    queue.push(msg);
-    pump();
-  };
-
-  // 必要なら外から待てるようにする（初期化で便利）
-  botInstance._chatQueue = queue;
-  botInstance._chatPump = pump;
-}
-
-// bot が利用可能になるまで待つ（復帰中でも /step を落とさない）
-async function waitForBotReady(timeoutMs = 120000) {
-  if (bot && botReadyPromise) {
-    // botReadyPromise が resolve 済みの場合でも await は即時完了
-    const timeout = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error("bot ready timeout")), timeoutMs)
-    );
-    return Promise.race([botReadyPromise, timeout]);
-  }
-  throw new Error("bot is not initialized");
-}
-
-// bot を破棄（イベント/ビューア/ソケットを綺麗に）
 function cleanupBot(reason = "cleanup") {
   try {
     if (bot && bot.viewer) bot.viewer.close();
@@ -127,21 +67,68 @@ function cleanupBot(reason = "cleanup") {
     if (bot && bot._client) bot.end();
   } catch {}
   bot = null;
-  console.error(`[mineflayer] bot cleaned up: ${reason}`);
+  console.error(`[mineflayer] cleaned up bot: ${reason}`);
 }
 
-// 自動再接続スケジュール
+// Safe rate limiter. Install ONLY after spawn (bot.chat may be undefined before spawn in some builds)
+function installChatRateLimiter(botInstance, intervalMs = CHAT_INTERVAL_MS_DEFAULT) {
+  if (!botInstance || typeof botInstance.chat !== "function") {
+    console.warn("[chat limiter] bot.chat is not ready; skip limiter install");
+    return false;
+  }
+
+  const rawChat = botInstance.chat.bind(botInstance);
+  const queue = [];
+  let pumping = false;
+  let lastSentAt = 0;
+
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  async function pump() {
+    if (pumping) return;
+    pumping = true;
+
+    while (queue.length > 0) {
+      const msg = queue.shift();
+      if (!msg) continue;
+
+      const now = Date.now();
+      const wait = Math.max(0, intervalMs - (now - lastSentAt));
+      if (wait > 0) await sleep(wait);
+
+      try {
+        rawChat(msg);
+      } catch (e) {
+        console.error("[chat limiter] rawChat failed:", e?.stack || e);
+        break;
+      }
+      lastSentAt = Date.now();
+    }
+
+    pumping = false;
+  }
+
+  botInstance.chat = (message) => {
+    if (message === null || message === undefined) return;
+    const msg = String(message).trim();
+    if (!msg) return;
+    queue.push(msg);
+    pump();
+  };
+
+  return true;
+}
+
 function scheduleReconnect(reason) {
-  if (!lastStartOptions) {
-    console.error("[mineflayer] cannot reconnect: lastStartOptions is null");
+  if (!lastStartBody) {
+    console.error("[mineflayer] cannot reconnect: lastStartBody is null");
     return;
   }
-  if (isReconnecting) return;
-  isReconnecting = true;
+  if (reconnecting) return;
+  reconnecting = true;
 
   reconnectAttempt += 1;
-  const base = 5000; // まず5秒
-  const backoff = Math.min(MAX_BACKOFF_MS, base * reconnectAttempt);
+  const backoff = Math.min(MAX_RECONNECT_MS, BASE_RECONNECT_MS * reconnectAttempt);
   const jitter = Math.floor(Math.random() * 1000);
   const waitMs = backoff + jitter;
 
@@ -151,44 +138,52 @@ function scheduleReconnect(reason) {
 
   if (reconnectTimer) clearTimeout(reconnectTimer);
   reconnectTimer = setTimeout(() => {
-    isReconnecting = false;
-    // 復帰時は "hard reset" を勝手にしない（サーバー負荷＆コマンド連打の元）
-    // ただし位置やkeepInventory等は lastStartOptions に含まれていれば適用される
-    startBotInternal(lastStartOptions, { isAutoReconnect: true }).catch((e) => {
-      console.error("[mineflayer] reconnect failed:", e?.stack || e);
-      // 失敗したら再スケジュール
-      scheduleReconnect("reconnect-failed");
-    });
+    reconnecting = false;
+
+    // Auto reconnect should avoid "hard" reset (massive /give spam). We force reset to "soft".
+    const body = { ...lastStartBody, reset: "soft" };
+
+    startBot(body, { isAutoReconnect: true })
+      .then(() => {
+        console.error("[mineflayer] reconnect started");
+      })
+      .catch((e) => {
+        console.error("[mineflayer] reconnect failed:", e?.stack || e);
+        scheduleReconnect("reconnect-failed");
+      });
   }, waitMs);
 }
 
-// bot生成の中核（/start と自動再接続の両方から呼ぶ）
-async function startBotInternal(options, { isAutoReconnect = false } = {}) {
-  // 以前の bot を落とす
-  if (bot) cleanupBot("restart");
+async function startBot(startBody, { isAutoReconnect = false } = {}) {
+  // store last body for reconnect
+  lastStartBody = startBody;
 
-  // bot ready promise を作り直す
+  // reset ready promise
   resetBotReadyPromise();
 
-  // 設定の保存（自動再接続用）
-  lastStartOptions = options;
-
-  const port = options.port;
-  const waitTicks = options.waitTicks;
+  // cleanup existing bot if any
+  if (bot) cleanupBot("restart");
 
   bot = mineflayer.createBot({
-    host: "localhost",
-    port: port,
+    host: "localhost", // minecraft server ip
+    port: startBody.port, // minecraft server port
     username: "bot",
     disableChatSigning: true,
     checkTimeoutInterval: 60 * 60 * 1000,
   });
 
-  // 強制スパム対策：bot.chat をキュー制限
-  installChatRateLimiter(bot);
+  // Connection failed before spawn
+  function onConnectionFailed(e) {
+    console.error("[mineflayer] connection failed:", e?.stack || e);
+    try {
+      if (botReadyReject) botReadyReject(e);
+    } catch {}
+    cleanupBot("connection-failed");
+  }
+  bot.once("error", onConnectionFailed);
 
-  // Event subscriptions / counters
-  bot.waitTicks = waitTicks;
+  // Common per-bot state
+  bot.waitTicks = startBody.waitTicks;
   bot.globalTickCounter = 0;
   bot.stuckTickCounter = 0;
   bot.stuckPosList = [];
@@ -196,27 +191,17 @@ async function startBotInternal(options, { isAutoReconnect = false } = {}) {
 
   // mounting will cause physicsTick to stop
   bot.on("mount", () => {
-    bot.dismount();
+    try { bot.dismount(); } catch {}
   });
 
-  // 接続失敗（初回spawn前）
-  const onConnectionFailed = (e) => {
-    console.error("[mineflayer] connection failed:", e?.stack || e);
+  // kicked/end => cleanup + schedule reconnect
+  bot.on("kicked", (message) => {
+    console.error("[mineflayer] kicked:", message);
     try {
-      if (botReadyReject) botReadyReject(e);
-    } catch {}
-    cleanupBot("connection-failed");
-  };
-  bot.once("error", onConnectionFailed);
-
-  // kicked/end/error は復帰トリガ
-  bot.on("kicked", (reason) => {
-    console.error("[mineflayer] kicked:", reason);
-    try {
-      if (botReadyReject) botReadyReject(new Error(`kicked:${reason}`));
+      if (botReadyReject) botReadyReject(new Error(`kicked:${message}`));
     } catch {}
     cleanupBot("kicked");
-    scheduleReconnect(`kicked:${reason}`);
+    scheduleReconnect(`kicked:${message}`);
   });
 
   bot.on("end", () => {
@@ -228,55 +213,28 @@ async function startBotInternal(options, { isAutoReconnect = false } = {}) {
     scheduleReconnect("end");
   });
 
-  bot.on("error", (err) => {
-    // spawn後の error も拾って復帰寄りに
-    console.error("[mineflayer] error:", err?.stack || err);
-    // spawn後に出る error で毎回復帰するのが嫌なら条件分岐してもOK
-  });
-
   bot.once("spawn", async () => {
-    // spawn 成功 → 初回バックオフリセット
+    // spawn success => reset reconnectAttempt
     reconnectAttempt = 0;
 
-    // spawnしたら接続失敗用エラーハンドラは外す
+    // spawn success => remove early connection failed handler
     bot.removeListener("error", onConnectionFailed);
 
-    // plugin load
-    const { pathfinder } = require("mineflayer-pathfinder");
-    const { plugin: tool } = require("mineflayer-tool");
-    const { plugin: pvp } = require("mineflayer-pvp");
-    const hawkEye = require("minecrafthawkeye");
-    bot.loadPlugin(pathfinder);
-    bot.loadPlugin(tool);
-    bot.loadPlugin(pvp);
-    bot.loadPlugin(hawkEye.default);
-    const collectBlock = require("./mineflayer-collectblock/lib/index.js");
-    bot.loadPlugin(collectBlock);
+    // IMPORTANT: install rate limiter AFTER spawn (fixes bind undefined)
+    installChatRateLimiter(bot, Number(process.env.BOT_CHAT_INTERVAL_MS || CHAT_INTERVAL_MS_DEFAULT));
 
-    // observation / skills inject（spawn毎に必要）
-    obs.inject(bot, [
-      OnChat,
-      OnError,
-      Voxels,
-      Status,
-      Inventory,
-      OnSave,
-      Chests,
-      BlockRecords,
-    ]);
-    skills.inject(bot);
-
-    // 初期化コマンド群（スパムになりやすいので chat limiter 経由で間隔が空く）
-    // ※自動再接続時に "hard reset"（/clear /kill /give連打）を避けるのが重要
     let itemTicks = 1;
 
-    if (!isAutoReconnect && options.reset === "hard") {
+    // "hard" reset spams commands; we allow only on manual start, never on auto reconnect
+    const resetMode = isAutoReconnect ? "soft" : startBody.reset;
+
+    if (resetMode === "hard") {
       bot.chat("/clear @s");
       bot.chat("/kill @s");
 
-      const inventory = options.inventory ? options.inventory : {};
-      const equipment = options.equipment
-        ? options.equipment
+      const inventory = startBody.inventory ? startBody.inventory : {};
+      const equipment = startBody.equipment
+        ? startBody.equipment
         : [null, null, null, null, null, null];
 
       for (let key in inventory) {
@@ -303,30 +261,54 @@ async function startBotInternal(options, { isAutoReconnect = false } = {}) {
       }
     }
 
-    if (!isAutoReconnect && options.position) {
-      bot.chat(
-        `/tp @s ${options.position.x} ${options.position.y} ${options.position.z}`
-      );
+    if (resetMode !== "soft" && startBody.position) {
+      bot.chat(`/tp @s ${startBody.position.x} ${startBody.position.y} ${startBody.position.z}`);
+    } else if (resetMode === "soft" && startBody.position) {
+      // even on soft, tp can be useful; but it's still a chat command so it's rate-limited anyway
+      bot.chat(`/tp @s ${startBody.position.x} ${startBody.position.y} ${startBody.position.z}`);
     }
 
-    // iron_pickaxe check
+    // if iron_pickaxe is in bot's inventory
     if (bot.inventory.items().find((item) => item.name === "iron_pickaxe")) {
       bot.iron_pickaxe = true;
     }
 
-    if (!isAutoReconnect && options.spread) {
+    const { pathfinder } = require("mineflayer-pathfinder");
+    const { plugin: tool } = require("mineflayer-tool");
+    const { plugin: pvp } = require("mineflayer-pvp");
+    const hawkEye = require("minecrafthawkeye");
+    bot.loadPlugin(pathfinder);
+    bot.loadPlugin(tool);
+    bot.loadPlugin(pvp);
+    bot.loadPlugin(hawkEye.default);
+
+    // Use the local mineflayer-collectblock plugin directly
+    const collectBlock = require("./mineflayer-collectblock/lib/index.js");
+    bot.loadPlugin(collectBlock);
+
+    obs.inject(bot, [
+      OnChat,
+      OnError,
+      Voxels,
+      Status,
+      Inventory,
+      OnSave,
+      Chests,
+      BlockRecords,
+    ]);
+    skills.inject(bot);
+
+    if (!isAutoReconnect && startBody.spread) {
       bot.chat(`/spreadplayers ~ ~ 0 300 under 80 false @s`);
       await bot.waitForTicks(bot.waitTicks);
     }
 
-    // 初期化コマンドが chat limiter で遅延することを見越して待つ
     await bot.waitForTicks(bot.waitTicks * itemTicks);
 
-    // gamerule（必要最低限）
+    // gamerules (rate-limited)
     bot.chat("/gamerule keepInventory true");
     bot.chat("/gamerule doDaylightCycle false");
 
-    // Ready!
     try {
       if (botReadyResolve) botReadyResolve(true);
     } catch {}
@@ -341,26 +323,20 @@ async function startBotInternal(options, { isAutoReconnect = false } = {}) {
 
 
 // ===== /start =====
-// NOTE: /start は「初回起動 or 明示的リスタート」に使う
 app.post("/start", async (req, res) => {
   try {
-    console.log(req.body);
-
-    // ===== MOD START: use startBotInternal + wait for ready =====
-    await startBotInternal(req.body, { isAutoReconnect: false });
+    // manual start (may allow hard reset)
+    await startBot(req.body, { isAutoReconnect: false });
     await waitForBotReady(120000);
-    // spawn直後の observe を返す（既存仕様）
+
+    // initial observation response (existing behavior)
     res.json(bot.observe());
 
-    // counter init（既存ロジック維持）
+    // init counters
     initCounter(bot);
-    // ===== MOD END =====
-
   } catch (e) {
     console.error("[/start] failed:", e?.stack || e);
-    try {
-      cleanupBot("start-failed");
-    } catch {}
+    try { cleanupBot("start-failed"); } catch {}
     res.status(400).json({ error: String(e?.message || e) });
   }
 });
@@ -368,17 +344,14 @@ app.post("/start", async (req, res) => {
 
 // ===== /step =====
 app.post("/step", async (req, res) => {
-  // bot が蹴られて復帰中の可能性があるので、まず待つ
+  // Ensure bot is ready (handles reconnect)
   try {
-    // ===== MOD START: wait for bot ready (reconnect-safe) =====
     await waitForBotReady(120000);
-    // ===== MOD END =====
   } catch (e) {
     return res.status(503).json({ error: `Bot not ready: ${e.message}` });
   }
 
   let response_sent = false;
-
   function otherError(err) {
     console.log("Uncaught Error");
     bot.emit("error", handleError(err));
@@ -389,7 +362,6 @@ app.post("/step", async (req, res) => {
       }
     });
   }
-
   process.on("uncaughtException", otherError);
 
   const mcData = require("minecraft-data")(bot.version);
@@ -448,8 +420,10 @@ app.post("/step", async (req, res) => {
       }
     }
   }
+
   bot.on("physicsTick", onTick);
 
+  // initialize fail count
   let _craftItemFailCount = 0;
   let _killMobFailCount = 0;
   let _mineBlockFailCount = 0;
@@ -462,7 +436,6 @@ app.post("/step", async (req, res) => {
 
   await bot.waitForTicks(bot.waitTicks);
   const r = await evaluateCode(code, programs);
-
   process.off("uncaughtException", otherError);
 
   if (r !== "success") {
@@ -524,7 +497,6 @@ app.post("/step", async (req, res) => {
 
   function returnItems() {
     bot.chat("/gamerule doTileDrops false");
-
     const crafting_table = bot.findBlock({
       matching: mcData.blocksByName.crafting_table.id,
       maxDistance: 128,
@@ -535,7 +507,6 @@ app.post("/step", async (req, res) => {
       );
       bot.chat("/give @s crafting_table");
     }
-
     const furnace = bot.findBlock({
       matching: mcData.blocksByName.furnace.id,
       maxDistance: 128,
@@ -546,20 +517,17 @@ app.post("/step", async (req, res) => {
       );
       bot.chat("/give @s furnace");
     }
-
     if (bot.inventoryUsed() >= 32) {
       if (!bot.inventory.items().find((item) => item.name === "chest")) {
         bot.chat("/give @s chest");
       }
     }
-
     if (
       bot.iron_pickaxe &&
       !bot.inventory.items().find((item) => item.name === "iron_pickaxe")
     ) {
       bot.chat("/give @s iron_pickaxe");
     }
-
     bot.chat("/gamerule doTileDrops true");
   }
 
@@ -596,14 +564,21 @@ app.post("/step", async (req, res) => {
       const code_source =
         "at " + code.split("\n")[match_line - 1].trim() + " in your code";
       return source + err.message + "\n" + code_source;
-    } else if (f_line && f_line.groups && f_line.groups.file.includes("<anonymous>")) {
+    } else if (
+      f_line &&
+      f_line.groups &&
+      f_line.groups.file.includes("<anonymous>")
+    ) {
       const { file, line, pos } = f_line.groups;
       let source =
         "Your code" + `:${match_line}\n${code.split("\n")[match_line - 1].trim()}\n `;
       let code_source = "";
       if (line < programs_length) {
-        source = "In your program code: " + programs.split("\n")[line - 1].trim() + "\n";
-        code_source = `at line ${match_line}:${code.split("\n")[match_line - 1].trim()} in your code`;
+        source =
+          "In your program code: " + programs.split("\n")[line - 1].trim() + "\n";
+        code_source = `at line ${match_line}:${code
+          .split("\n")
+          [match_line - 1].trim()} in your code`;
       }
       return source + err.message + "\n" + code_source;
     }
@@ -611,13 +586,13 @@ app.post("/step", async (req, res) => {
   }
 });
 
-// ===== /stop =====
 app.post("/stop", (req, res) => {
   if (bot) cleanupBot("stop");
-  res.json({ message: "Bot stopped" });
+  res.json({
+    message: "Bot stopped",
+  });
 });
 
-// ===== /pause =====
 app.post("/pause", (req, res) => {
   if (!bot) {
     res.status(400).json({ error: "Bot not spawned" });
@@ -634,7 +609,7 @@ app.post("/", (req, res) => {
   res.json({ status: "ready" });
 });
 
-// ===== /chat =====
+// Chat endpoint to send messages to the bot
 app.post("/chat", (req, res) => {
   if (!bot) {
     res.status(400).json({ error: "Bot not spawned" });
@@ -647,6 +622,7 @@ app.post("/chat", (req, res) => {
     return;
   }
 
+  // Emit a chat event as if it came from a player
   bot.emit("chatEvent", sender, message);
   console.log(`Chat from ${sender}: ${message}`);
 
@@ -656,7 +632,7 @@ app.post("/chat", (req, res) => {
   });
 });
 
-// ===== server =====
+// Server listening to PORT 3000
 const DEFAULT_PORT = 3000;
 const PORT = process.argv[2] || DEFAULT_PORT;
 app.listen(PORT, () => {
