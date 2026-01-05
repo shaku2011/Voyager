@@ -21,5 +21,5 @@ async function craftStoneTools(bot) {
   await craftItem(bot, "stone_sword", 1, craftingTablePosition);
   await craftItem(bot, "stone_axe", 1, craftingTablePosition);
   await craftItem(bot, "stone_shovel", 1, craftingTablePosition);
-//   bot.chat("Stone sword, stone axe, and stone shovel crafted.");
+  bot.chat("Stone sword, stone axe, and stone shovel crafted.");
 }

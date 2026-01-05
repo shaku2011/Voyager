@@ -8,9 +8,9 @@ async function craftWoodenSword(bot) {
     const planksToCraft = Math.ceil((2 - oakPlanksCount) / 4);
     if (oakLogsCount >= planksToCraft) {
       await craftItem(bot, "oak_planks", planksToCraft);
-//       bot.chat("Crafted oak planks.");
+      bot.chat("Crafted oak planks.");
     } else {
-//       bot.chat("Not enough oak logs to craft oak planks.");
+      bot.chat("Not enough oak logs to craft oak planks.");
       return;
     }
   }
@@ -21,7 +21,7 @@ async function craftWoodenSword(bot) {
   // If not, craft sticks from oak planks
   if (sticksCount < 1) {
     await craftItem(bot, "stick", 1);
-//     bot.chat("Crafted sticks.");
+    bot.chat("Crafted sticks.");
   }
 
   // Place the crafting table near the bot
@@ -30,5 +30,5 @@ async function craftWoodenSword(bot) {
 
   // Craft a wooden sword using the crafting table
   await craftItem(bot, "wooden_sword", 1);
-//   bot.chat("Crafted a wooden sword.");
+  bot.chat("Crafted a wooden sword.");
 }

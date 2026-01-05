@@ -10,7 +10,7 @@ async function cookSevenMutton(bot) {
   // Find a suitable position to place the furnace
   const furnacePosition = await findSuitablePosition(bot);
   if (!furnacePosition) {
-//     bot.chat("Could not find a suitable position to place the furnace.");
+    bot.chat("Could not find a suitable position to place the furnace.");
     return;
   }
 
@@ -19,5 +19,5 @@ async function cookSevenMutton(bot) {
 
   // Smelt 7 raw mutton using the available coal as fuel
   await smeltItem(bot, "mutton", "coal", 7);
-//   bot.chat("7 mutton cooked.");
+  bot.chat("7 mutton cooked.");
 }

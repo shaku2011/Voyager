@@ -17,12 +17,12 @@ async function craftShieldImproved(bot) {
         return oak_log;
       });
       await mineBlock(bot, "oak_log", planksToCraft - oakLogsCount);
-//       bot.chat("Collected oak logs.");
+      bot.chat("Collected oak logs.");
     }
 
     // Craft oak planks from oak logs
     await craftItem(bot, "oak_planks", planksToCraft);
-//     bot.chat("Crafted oak planks.");
+    bot.chat("Crafted oak planks.");
     oakPlanksCount = bot.inventory.count(mcData.itemsByName.oak_planks.id);
   }
 
@@ -39,11 +39,11 @@ async function craftShieldImproved(bot) {
       return iron_ore;
     });
     await mineBlock(bot, "iron_ore", 1);
-//     bot.chat("Collected iron ores.");
+    bot.chat("Collected iron ores.");
 
     // Smelt iron ores into iron ingots
     await smeltItem(bot, "iron_ore", "coal", 1);
-//     bot.chat("Smelted iron ores into iron ingots.");
+    bot.chat("Smelted iron ores into iron ingots.");
   }
 
   // Place the crafting table near the bot
@@ -52,5 +52,5 @@ async function craftShieldImproved(bot) {
 
   // Craft a shield using the crafting table
   await craftItem(bot, "shield", 1);
-//   bot.chat("Crafted a shield.");
+  bot.chat("Crafted a shield.");
 }

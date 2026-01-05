@@ -5,5 +5,5 @@ async function mineThreeIronOre(bot) {
 
   // Find and mine 3 iron ore blocks
   await mineBlock(bot, "iron_ore", 3);
-//   bot.chat("3 iron ore mined.");
+  bot.chat("3 iron ore mined.");
 }

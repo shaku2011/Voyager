@@ -15,5 +15,5 @@ async function smeltFiveRawGold(bot) {
   await smeltItem(bot, "raw_gold", "coal", 5);
 
   // Collect the smelted gold ingots
-//   bot.chat("5 raw gold smelted.");
+  bot.chat("5 raw gold smelted.");
 }

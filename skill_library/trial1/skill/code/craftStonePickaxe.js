@@ -6,11 +6,11 @@ async function craftStonePickaxe(bot) {
   // If not enough cobblestone or sticks, collect the required items
   if (cobblestoneCount < 3) {
     await mineBlock(bot, "stone", 3 - cobblestoneCount);
-//     bot.chat("Collected cobblestone.");
+    bot.chat("Collected cobblestone.");
   }
   if (sticksCount < 2) {
     await craftItem(bot, "stick", 1);
-//     bot.chat("Crafted sticks.");
+    bot.chat("Crafted sticks.");
   }
 
   // Place the crafting table near the bot
@@ -19,5 +19,5 @@ async function craftStonePickaxe(bot) {
 
   // Craft a stone pickaxe using the crafting table
   await craftItem(bot, "stone_pickaxe", 1);
-//   bot.chat("Crafted a stone pickaxe.");
+  bot.chat("Crafted a stone pickaxe.");
 }

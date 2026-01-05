@@ -13,11 +13,11 @@ async function mineFiveCopperOres(bot) {
     return copperOres.length >= 5 ? copperOres : null;
   });
   if (!copperOres) {
-//     bot.chat("Could not find enough copper ores.");
+    bot.chat("Could not find enough copper ores.");
     return;
   }
 
   // Mine the 5 copper_ore blocks
   await mineBlock(bot, "copper_ore", 5);
-//   bot.chat("5 copper ores mined.");
+  bot.chat("5 copper ores mined.");
 }

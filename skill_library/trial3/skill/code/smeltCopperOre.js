@@ -27,5 +27,5 @@ async function smeltCopperOre(bot) {
   await smeltItem(bot, "raw_copper", "coal", 1);
 
   // Collect the smelted copper ingot
-//   bot.chat("1 copper ore smelted.");
+  bot.chat("1 copper ore smelted.");
 }

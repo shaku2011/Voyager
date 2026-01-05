@@ -15,8 +15,8 @@ async function equipIronSword(bot) {
   // Equip the iron sword
   if (ironSword) {
     await bot.equip(ironSword, "hand");
-//     bot.chat("Equipped iron sword.");
+    bot.chat("Equipped iron sword.");
   } else {
-//     bot.chat("Iron sword not found in inventory or chest.");
+    bot.chat("Iron sword not found in inventory or chest.");
   }
 }

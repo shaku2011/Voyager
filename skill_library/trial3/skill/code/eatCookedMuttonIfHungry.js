@@ -7,8 +7,8 @@ async function eatCookedMuttonIfHungry(bot) {
 
     // Consume the cooked mutton
     await bot.consume();
-//     bot.chat("1 cooked mutton eaten.");
+    bot.chat("1 cooked mutton eaten.");
   } else {
-//     bot.chat("Hunger is full, no need to eat cooked mutton.");
+    bot.chat("Hunger is full, no need to eat cooked mutton.");
   }
 }

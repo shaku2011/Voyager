@@ -4,5 +4,5 @@ async function equipIronChestplate(bot) {
 
   // Equip the iron chestplate in the torso slot
   await bot.equip(ironChestplate, "torso");
-//   bot.chat("Iron chestplate equipped.");
+  bot.chat("Iron chestplate equipped.");
 }

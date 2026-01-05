@@ -4,7 +4,7 @@ async function killThreeChickens(bot) {
   if (sword) {
     await bot.equip(sword, "hand");
   } else {
-//     bot.chat("No sword found, using bare hands.");
+    bot.chat("No sword found, using bare hands.");
   }
 
   // Explore the area to find 3 chickens
@@ -28,5 +28,5 @@ async function killThreeChickens(bot) {
   }
 
   // Report the completion of the task
-//   bot.chat("3 chickens killed.");
+  bot.chat("3 chickens killed.");
 }

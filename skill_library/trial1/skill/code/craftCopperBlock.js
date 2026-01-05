@@ -5,9 +5,9 @@ async function craftCopperBlock(bot) {
   // If not enough copper ingots, mine copper ores and smelt them into copper ingots
   if (copperIngotsCount < 9) {
     await mineBlock(bot, "copper_ore", 9 - copperIngotsCount);
-//     bot.chat("Collected copper ores.");
+    bot.chat("Collected copper ores.");
     await smeltItem(bot, "copper_ore", "coal", 9 - copperIngotsCount);
-//     bot.chat("Smelted copper ores into copper ingots.");
+    bot.chat("Smelted copper ores into copper ingots.");
   }
 
   // Place the crafting table near the bot
@@ -16,5 +16,5 @@ async function craftCopperBlock(bot) {
 
   // Craft a copper block using the crafting table
   await craftItem(bot, "copper_block", 1);
-//   bot.chat("Crafted a copper block.");
+  bot.chat("Crafted a copper block.");
 }

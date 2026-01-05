@@ -4,7 +4,7 @@ async function killThreeSheep(bot) {
   if (sword) {
     await bot.equip(sword, "hand");
   } else {
-//     bot.chat("No sword found, using bare hands.");
+    bot.chat("No sword found, using bare hands.");
   }
 
   // Explore the area to find 3 sheep
@@ -28,5 +28,5 @@ async function killThreeSheep(bot) {
   }
 
   // Report the completion of the task
-//   bot.chat("3 sheep killed.");
+  bot.chat("3 sheep killed.");
 }

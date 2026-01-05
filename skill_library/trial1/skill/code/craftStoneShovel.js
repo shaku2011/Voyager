@@ -6,13 +6,13 @@ async function craftStoneShovel(bot) {
   // If not enough cobblestone, mine cobblestone
   if (cobblestoneCount < 1) {
     await mineBlock(bot, "stone", 1);
-//     bot.chat("Collected cobblestone.");
+    bot.chat("Collected cobblestone.");
   }
 
   // If not enough sticks, craft sticks
   if (sticksCount < 2) {
     await craftItem(bot, "stick", 1);
-//     bot.chat("Crafted sticks.");
+    bot.chat("Crafted sticks.");
   }
 
   // Place the crafting table near the bot
@@ -21,5 +21,5 @@ async function craftStoneShovel(bot) {
 
   // Craft a stone shovel using the crafting table
   await craftItem(bot, "stone_shovel", 1);
-//   bot.chat("Crafted a stone shovel.");
+  bot.chat("Crafted a stone shovel.");
 }

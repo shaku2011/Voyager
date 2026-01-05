@@ -5,9 +5,9 @@ async function craftIronHelmet(bot) {
   // If not enough iron ingots, mine iron ores and smelt them into iron ingots
   if (ironIngotsCount < 5) {
     await mineBlock(bot, "iron_ore", 5 - ironIngotsCount);
-//     bot.chat("Collected iron ores.");
+    bot.chat("Collected iron ores.");
     await smeltItem(bot, "iron_ore", "coal", 5 - ironIngotsCount);
-//     bot.chat("Smelted iron ores into iron ingots.");
+    bot.chat("Smelted iron ores into iron ingots.");
   }
 
   // Place the crafting table near the bot
@@ -16,5 +16,5 @@ async function craftIronHelmet(bot) {
 
   // Craft an iron helmet using the crafting table
   await craftItem(bot, "iron_helmet", 1);
-//   bot.chat("Crafted an iron helmet.");
+  bot.chat("Crafted an iron helmet.");
 }
