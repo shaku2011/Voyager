@@ -18,6 +18,7 @@ const { plugin: tool } = require("mineflayer-tool");
 let bot = null;
 
 const app = express();
+const botName = process.env.BOT_NAME || `bot_${Date.now()}`;
 
 app.use(bodyParser.json({ limit: "50mb" }));
 app.use(bodyParser.urlencoded({ limit: "50mb", extended: false }));
@@ -29,7 +30,7 @@ app.post("/start", (req, res) => {
     bot = mineflayer.createBot({
         host: "localhost", // minecraft server ip
         port: req.body.port, // minecraft server port
-        username: "bot",
+        username: botName,
         disableChatSigning: true,
         checkTimeoutInterval: 60 * 60 * 1000,
     });

@@ -52,6 +52,7 @@ class MinecraftInstance:
                 "node",
                 U.f_join(file_path, "mineflayer/index.js"),
                 str(server_port),
+                # bot_name,  # ★追加
             ],
             name="mineflayer",
             ready_match=r"Server started on port (\d+)",
