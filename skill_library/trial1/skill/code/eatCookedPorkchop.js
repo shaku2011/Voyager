@@ -7,5 +7,5 @@ async function eatCookedPorkchop(bot) {
   await bot.consume();
 
   // Send a chat message to indicate the task is completed
-//   bot.chat("Ate 1 cooked porkchop.");
+  bot.chat("Ate 1 cooked porkchop.");
 }

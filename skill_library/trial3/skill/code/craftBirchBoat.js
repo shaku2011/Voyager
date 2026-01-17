@@ -31,7 +31,7 @@ async function craftBirchBoat(bot) {
   // Find a suitable position to place the crafting table
   const craftingTablePosition = await findSuitablePosition(bot);
   if (!craftingTablePosition) {
-//     bot.chat("Failed to find a suitable position to place the crafting table. Please try again.");
+    bot.chat("Failed to find a suitable position to place the crafting table. Please try again.");
     return;
   }
 
@@ -40,5 +40,5 @@ async function craftBirchBoat(bot) {
 
   // Craft a birch boat using birch planks and the crafting table
   await craftItem(bot, "birch_boat", 1, craftingTablePosition);
-//   bot.chat("Birch boat crafted.");
+  bot.chat("Birch boat crafted.");
 }

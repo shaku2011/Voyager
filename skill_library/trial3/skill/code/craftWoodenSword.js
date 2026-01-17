@@ -19,5 +19,5 @@ async function craftWoodenSword(bot) {
 
   // Craft a wooden sword using oak planks and sticks with the crafting table
   await craftItem(bot, "wooden_sword", 1, craftingTablePosition);
-//   bot.chat("Wooden sword crafted.");
+  bot.chat("Wooden sword crafted.");
 }

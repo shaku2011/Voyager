@@ -39,10 +39,10 @@ async function fishInNearbyWaterSafely(bot) {
   // Fish in the water
   try {
     await bot.fish();
-//     bot.chat("Fished in the nearby water.");
+    bot.chat("Fished in the nearby water.");
   } catch (error) {
     if (error.message === "Fishing cancelled") {
-//       bot.chat("Fishing was cancelled. Trying again...");
+      bot.chat("Fishing was cancelled. Trying again...");
       await fishInNearbyWaterSafely(bot);
     } else {
       throw error;

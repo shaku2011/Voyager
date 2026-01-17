@@ -13,17 +13,17 @@ async function collectFiveCactusBlocks(bot) {
     return cactusBlocks.length >= 5 ? cactusBlocks : null;
   });
   if (!cactusBlocks) {
-//     bot.chat("Could not find enough cactus blocks.");
+    bot.chat("Could not find enough cactus blocks.");
     return;
   }
 
   // Mine the 5 cactus blocks using the mineBlock function
   await mineBlock(bot, "cactus", 5);
-//   bot.chat("5 cactus blocks mined.");
+  bot.chat("5 cactus blocks mined.");
 
   // Collect the dropped cactus items
   for (const cactusBlock of cactusBlocks) {
     await bot.pathfinder.goto(new GoalBlock(cactusBlock.x, cactusBlock.y, cactusBlock.z));
   }
-//   bot.chat("Collected 5 cactus blocks.");
+  bot.chat("Collected 5 cactus blocks.");
 }

@@ -38,5 +38,5 @@ async function craftIronLeggingsAndBoots(bot) {
 
   // Craft iron boots using the crafting table
   await craftItem(bot, "iron_boots", 1);
-//   bot.chat("Iron leggings and iron boots crafted.");
+  bot.chat("Iron leggings and iron boots crafted.");
 }

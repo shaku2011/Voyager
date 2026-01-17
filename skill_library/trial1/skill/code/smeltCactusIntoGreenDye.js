@@ -10,7 +10,7 @@ async function smeltCactusIntoGreenDye(bot) {
   // Find a suitable position to place the furnace
   const furnacePosition = await findSuitablePosition(bot);
   if (!furnacePosition) {
-//     bot.chat("Could not find a suitable position to place the furnace.");
+    bot.chat("Could not find a suitable position to place the furnace.");
     return;
   }
 
@@ -19,5 +19,5 @@ async function smeltCactusIntoGreenDye(bot) {
 
   // Smelt 5 cactus using the available coal as fuel
   await smeltItem(bot, "cactus", "coal", 5);
-//   bot.chat("5 cactus smelted into green dye.");
+  bot.chat("5 cactus smelted into green dye.");
 }

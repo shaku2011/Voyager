@@ -7,7 +7,7 @@ async function killChickenWithIncreasedTime(bot) {
     return chicken;
   });
   if (!chicken) {
-//     bot.chat("No chicken found.");
+    bot.chat("No chicken found.");
     return;
   }
 
@@ -16,12 +16,12 @@ async function killChickenWithIncreasedTime(bot) {
   if (sword) {
     await bot.equip(sword, "hand");
   } else {
-//     bot.chat("No sword found, using bare hands.");
+    bot.chat("No sword found, using bare hands.");
   }
 
   // Kill the chicken
   await killMob(bot, "chicken", 300);
 
   // Report the completion of the task
-//   bot.chat("1 chicken killed.");
+  bot.chat("1 chicken killed.");
 }

@@ -13,7 +13,7 @@ async function collectBamboo(bot) {
     return bambooPlants.length >= 10 ? bambooPlants : null;
   });
   if (!bambooPlants) {
-//     bot.chat("Could not find enough bamboo plants.");
+    bot.chat("Could not find enough bamboo plants.");
     return;
   }
 
@@ -22,11 +22,11 @@ async function collectBamboo(bot) {
     const block = bot.blockAt(bambooPlant);
     await bot.dig(block);
   }
-//   bot.chat("Broke 10 bamboo plants.");
+  bot.chat("Broke 10 bamboo plants.");
 
   // Collect the dropped bamboo items
   for (const bambooPlant of bambooPlants) {
     await bot.pathfinder.goto(new GoalBlock(bambooPlant.x, bambooPlant.y, bambooPlant.z));
   }
-//   bot.chat("Collected 10 bamboo.");
+  bot.chat("Collected 10 bamboo.");
 }

@@ -2,7 +2,7 @@ async function craftBoneMeal(bot) {
   // Check if there are enough bones in the inventory
   const bones = bot.inventory.count(mcData.itemsByName["bone"].id);
   if (bones < 2) {
-//     bot.chat("Not enough bones to craft 4 bone meal.");
+    bot.chat("Not enough bones to craft 4 bone meal.");
     return;
   }
 
@@ -12,5 +12,5 @@ async function craftBoneMeal(bot) {
 
   // Craft 4 bone meal using 2 bones and the crafting table
   await craftItem(bot, "bone_meal", 2, craftingTablePosition);
-//   bot.chat("4 bone meal crafted.");
+  bot.chat("4 bone meal crafted.");
 }

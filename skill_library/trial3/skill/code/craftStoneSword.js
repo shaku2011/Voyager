@@ -2,7 +2,7 @@ async function craftStoneSword(bot) {
   // Check if there are enough cobblestones in the inventory
   const cobblestones = bot.inventory.count(mcData.itemsByName["cobblestone"].id);
   if (cobblestones < 2) {
-//     bot.chat("Not enough cobblestones to craft a stone sword.");
+    bot.chat("Not enough cobblestones to craft a stone sword.");
     return;
   }
 
@@ -19,5 +19,5 @@ async function craftStoneSword(bot) {
 
   // Craft a stone sword using cobblestones and sticks with the crafting table
   await craftItem(bot, "stone_sword", 1, craftingTablePosition);
-//   bot.chat("Stone sword crafted.");
+  bot.chat("Stone sword crafted.");
 }

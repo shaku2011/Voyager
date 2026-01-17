@@ -13,5 +13,5 @@ async function craftClock(bot) {
 
   // Craft a clock using 4 gold ingots and 1 redstone dust with the crafting table
   await craftItem(bot, "clock", 1, craftingTablePosition);
-//   bot.chat("Clock crafted.");
+  bot.chat("Clock crafted.");
 }

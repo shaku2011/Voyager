@@ -13,5 +13,5 @@ async function smeltFiveRawIron(bot) {
 
   // Smelt 5 raw iron using the available coal as fuel
   await smeltItem(bot, "raw_iron", "coal", 5);
-//   bot.chat("5 raw iron smelted.");
+  bot.chat("5 raw iron smelted.");
 }

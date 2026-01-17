@@ -11,15 +11,15 @@ async function killOnePig(bot) {
     return pig;
   });
   if (!pig) {
-//     bot.chat("Could not find a pig.");
+    bot.chat("Could not find a pig.");
     return;
   }
 
   // Kill the pig using the wooden sword
   await killMob(bot, "pig", 300);
-//   bot.chat("Killed a pig.");
+  bot.chat("Killed a pig.");
 
   // Collect the dropped items
   await bot.pathfinder.goto(new GoalBlock(pig.position.x, pig.position.y, pig.position.z));
-//   bot.chat("Collected dropped items.");
+  bot.chat("Collected dropped items.");
 }

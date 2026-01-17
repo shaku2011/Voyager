@@ -17,7 +17,7 @@ async function catchThreeFish(bot) {
       return foundWaterBlock;
     });
     if (!waterBlock) {
-//       bot.chat("No path to the water block. Trying to find another water block...");
+      bot.chat("No path to the water block. Trying to find another water block...");
     }
   }
 
@@ -35,10 +35,10 @@ async function catchThreeFish(bot) {
   for (let i = 0; i < 3; i++) {
     try {
       await bot.fish();
-//       bot.chat(`Fish ${i + 1} caught.`);
+      bot.chat(`Fish ${i + 1} caught.`);
     } catch (error) {
       if (error.message === "Fishing cancelled") {
-//         bot.chat("Fishing was cancelled. Trying again...");
+        bot.chat("Fishing was cancelled. Trying again...");
         i--; // Retry the same iteration
       } else {
         throw error;

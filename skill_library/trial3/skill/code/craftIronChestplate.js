@@ -35,11 +35,11 @@ async function craftIronChestplate(bot) {
     }
   }
   if (!craftingTablePosition) {
-//     bot.chat("Failed to place crafting table. Please try again.");
+    bot.chat("Failed to place crafting table. Please try again.");
     return;
   }
 
   // Craft an iron chestplate using iron ingots and the crafting table
   await craftItem(bot, "iron_chestplate", 1, craftingTablePosition);
-//   bot.chat("Iron chestplate crafted.");
+  bot.chat("Iron chestplate crafted.");
 }

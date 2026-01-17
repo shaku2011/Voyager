@@ -20,7 +20,7 @@ async function craftWoodenPickaxe(bot) {
       await mineBlock(bot, "oak_log", planksToCraft - oakLogsCount);
     }
     await craftItem(bot, "oak_planks", planksToCraft);
-//     bot.chat("Crafted oak planks.");
+    bot.chat("Crafted oak planks.");
   }
 
   // Check if there are enough sticks in the inventory
@@ -29,7 +29,7 @@ async function craftWoodenPickaxe(bot) {
   // If not, craft sticks from oak planks
   if (sticksCount < 2) {
     await craftItem(bot, "stick", 1);
-//     bot.chat("Crafted sticks.");
+    bot.chat("Crafted sticks.");
   }
 
   // Place the crafting table near the bot
@@ -38,5 +38,5 @@ async function craftWoodenPickaxe(bot) {
 
   // Craft a wooden pickaxe using the crafting table
   await craftItem(bot, "wooden_pickaxe", 1);
-//   bot.chat("Crafted a wooden pickaxe.");
+  bot.chat("Crafted a wooden pickaxe.");
 }

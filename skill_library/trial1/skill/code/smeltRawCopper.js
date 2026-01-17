@@ -10,7 +10,7 @@ async function smeltRawCopper(bot) {
   // Find a suitable position to place the furnace
   const furnacePosition = await findSuitablePosition(bot);
   if (!furnacePosition) {
-//     bot.chat("Could not find a suitable position to place the furnace.");
+    bot.chat("Could not find a suitable position to place the furnace.");
     return;
   }
 
@@ -19,5 +19,5 @@ async function smeltRawCopper(bot) {
 
   // Smelt 19 raw copper using the available coal as fuel
   await smeltItem(bot, "raw_copper", "coal", 19);
-//   bot.chat("19 raw copper smelted.");
+  bot.chat("19 raw copper smelted.");
 }

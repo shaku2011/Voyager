@@ -5,5 +5,5 @@ async function craftIronHelmet(bot) {
 
   // Craft an iron helmet using the crafting table
   await craftItem(bot, "iron_helmet", 1);
-//   bot.chat("Crafted an iron helmet.");
+  bot.chat("Crafted an iron helmet.");
 }
