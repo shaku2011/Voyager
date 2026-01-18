@@ -197,9 +197,9 @@ class Voyager:
         await self.talking.explain_goal(self.agent_state.goal)
         await self.talking.explain_decision(self.agent_state.last_action)
 
-        self.output.describe_goal(self.agent_state.goal)
-        self.output.describe_decision(self.agent_state.last_action)
-        self.output.report_observation(observation_summary)
+        await self.output.describe_goal(self.agent_state.goal)
+        await self.output.describe_decision(self.agent_state.last_action)
+        await self.output.report_observation(observation_summary)
 
         # === [PIANO] Controller Decision ===
         try:
@@ -269,7 +269,7 @@ class Voyager:
             self.last_events = copy.deepcopy(events)
             self.messages = [system_message, human_message]
         else:
-            self.output.announce_failure(self.task)
+            await self.output.announce_failure(self.task)
             await self.output.why_failed(self.task, self.messages[-1].content)
             self.recorder.record([], self.task)
             print(f"\033[34m{parsed_result} Trying again!\033[0m")
@@ -288,7 +288,7 @@ class Voyager:
             info["program_code"] = parsed_result["program_code"]
             info["program_name"] = parsed_result["program_name"]
         else:
-            self.output.announce_failure(self.task)
+            await self.output.announce_failure(self.task)
             await self.output.why_failed(self.task, self.messages[-1].content)
             print(
                 f"\033[32m****Action Agent human message****\n{self.messages[-1].content}\033[0m"
@@ -376,23 +376,36 @@ class Voyager:
                     "task": task,
                     "success": False,
                 }
-                self.last_events = self.env.reset(
-                    options={
-                        "mode": "hard",
-                        "wait_ticks": self.env_wait_ticks,
-                        "inventory": self.last_events[-1][1]["inventory"],
-                        "equipment": self.last_events[-1][1]["status"]["equipment"],
-                        "position": self.last_events[-1][1]["status"]["position"],
-                    }
-                )
+                if self.last_events:
+                    self.last_events = self.env.reset(
+                        options={
+                            "mode": "hard",
+                            "wait_ticks": self.env_wait_ticks,
+                            "inventory": self.last_events[-1][1]["inventory"],
+                            "equipment": self.last_events[-1][1]["status"]["equipment"],
+                            "position": self.last_events[-1][1]["status"]["position"],
+                        }
+                    )
+                else:
+                    print("[WARN] last_events is empty. Resetting environment with mode='hard'.")
+                    self.last_events = self.env.reset(
+                        options={
+                            "mode": "hard",
+                            "wait_ticks": self.env_wait_ticks,
+                        }
+                    )
                 print("Your last round rollout terminated due to error:")
                 print(f"\033[41m{e}\033[0m")
 
             if info["success"]:
-                self.output.announce_success(self.task)
+                await self.output.announce_success(self.task)
                 self.skill_manager.add_new_skill(info)
 
+            print(f"[DEBUG] progress before = {self.curriculum_agent.progress}")
             self.curriculum_agent.update_exploration_progress(info)
+            print(f"[DEBUG] progress after  = {self.curriculum_agent.progress}")
+            print(f"[DEBUG] Expected task: {sub_goals[self.curriculum_agent.progress]}")
+            print(f"[DEBUG] Completed task from info: {info['task']}")
             print(
                 f"\033[35mCompleted tasks: {', '.join(self.curriculum_agent.completed_tasks)}\033[0m"
             )
@@ -424,6 +437,7 @@ class Voyager:
 
         if not sub_goals:
             sub_goals = await self.decompose_task(task)
+            print(f"[DEBUG] Sub-goals: {sub_goals}")
 
         self.env.reset(
             options={
@@ -446,7 +460,11 @@ class Voyager:
                 context=context,
                 reset_env=reset_env,
             )
+            print(f"[DEBUG] progress before = {self.curriculum_agent.progress}")
             self.curriculum_agent.update_exploration_progress(info)
+            print(f"[DEBUG] progress after  = {self.curriculum_agent.progress}")
+            print(f"[DEBUG] Expected task: {sub_goals[self.curriculum_agent.progress]}")
+            print(f"[DEBUG] Completed task from info: {info['task']}")
             print(
                 f"\033[35mCompleted tasks: {', '.join(self.curriculum_agent.completed_tasks)}\033[0m"
             )
