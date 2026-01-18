@@ -175,12 +175,11 @@ class SkillManager:
             skills.append(self.skills[doc.metadata["name"]]["code"])
         return skills
 
-
-def render_system_message(self, skills, goal=None, decision=None):
-    system_prompt = self.system_prompt + "\n\n"
-    if goal:
-        system_prompt += f"[PIANO Goal]\n{goal}\n\n"
-    if decision:
-        system_prompt += f"[Controller Decision]\n{decision}\n\n"
-    system_prompt += self.render_skills(skills)
-    return ChatMessage(role="system", content=system_prompt)
+    def render_system_message(self, skills, goal=None, decision=None):
+        system_prompt = self.system_prompt + "\n\n"
+        if goal:
+            system_prompt += f"[PIANO Goal]\n{goal}\n\n"
+        if decision:
+            system_prompt += f"[Controller Decision]\n{decision}\n\n"
+        system_prompt += self.render_skills(skills)
+        return ChatMessage(role="system", content=system_prompt)
