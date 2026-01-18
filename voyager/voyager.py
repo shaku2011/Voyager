@@ -159,8 +159,6 @@ class Voyager:
             base_url=critic_agent_base_url,
         )
 
-        import os
-
         goal_model = os.getenv("VOYAGER_GOAL_MODEL", "gpt-4")
         controller_model = os.getenv("VOYAGER_CONTROLLER_MODEL", "gpt-4")
 
