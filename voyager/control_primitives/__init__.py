@@ -9,9 +9,7 @@ def load_control_primitives(primitive_names=None):
         primitives_path = importlib.resources.files("voyager") / "control_primitives"
         if primitive_names is None:
             primitive_names = [
-                f.name[:-3]
-                for f in primitives_path.iterdir()
-                if f.name.endswith(".js")
+                f.name[:-3] for f in primitives_path.iterdir() if f.name.endswith(".js")
             ]
         primitives = []
         for primitive_name in primitive_names:
@@ -21,6 +19,7 @@ def load_control_primitives(primitive_names=None):
     except (AttributeError, TypeError):
         # Fallback for older Python versions
         import pkg_resources
+
         package_path = pkg_resources.resource_filename("voyager", "")
         if primitive_names is None:
             primitive_names = [

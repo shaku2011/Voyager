@@ -1,4 +1,3 @@
-
 class AgentState:
     def __init__(self):
         self.goal = None

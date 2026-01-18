@@ -32,7 +32,7 @@ class ActionAgent:
             self.chest_memory = U.load_json(f"{ckpt_dir}/action/chest_memory.json")
         else:
             self.chest_memory = {}
-        
+
         llm_kwargs = {
             "model": model_name,
             "temperature": temperature,
@@ -40,7 +40,7 @@ class ActionAgent:
         }
         if base_url:
             llm_kwargs["base_url"] = base_url
-        
+
         self.llm = ChatOpenAI(**llm_kwargs)
 
     def update_chest_memory(self, chests):
@@ -55,7 +55,9 @@ class ActionAgent:
                     self.chest_memory.pop(position)
             else:
                 if chest != "Invalid":
-                    print(f"\033[32mAction Agent saving chest {position}: {chest}\033[0m")
+                    print(
+                        f"\033[32mAction Agent saving chest {position}: {chest}\033[0m"
+                    )
                     self.chest_memory[position] = chest
         U.dump_json(self.chest_memory, f"{self.ckpt_dir}/action/chest_memory.json")
 

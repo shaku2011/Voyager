@@ -1,4 +1,3 @@
-
 import copy
 import json
 import os
@@ -18,7 +17,6 @@ from voyager.modules.goal_generation import GoalGenerationModule
 from voyager.modules.controller import CognitiveController
 from voyager.modules.state import AgentState
 import asyncio
-
 
 
 # TODO: remove event memory
@@ -160,7 +158,7 @@ class Voyager:
             mode=critic_agent_mode,
             base_url=critic_agent_base_url,
         )
-        
+
         import os
 
         goal_model = os.getenv("VOYAGER_GOAL_MODEL", "gpt-4")
@@ -229,7 +227,6 @@ class Voyager:
     def close(self):
         self.env.close()
 
-    
     def step(self):
         if self.action_agent_rollout_num_iter < 0:
             raise ValueError("Agent must be reset before stepping")
@@ -274,8 +271,7 @@ class Voyager:
 
         success = False
         if isinstance(parsed_result, dict):
-            code = parsed_result["program_code"] + "
-" + parsed_result["exec_code"]
+            code = parsed_result["program_code"] + "\n" + parsed_result["exec_code"]
             events = self.env.step(
                 code,
                 programs=self.skill_manager.programs,
@@ -291,8 +287,6 @@ class Voyager:
                 chest_observation=self.action_agent.render_chest_observation(),
                 max_retries=5,
             )
-
-        return success
 
             if self.reset_placed_if_failed and not success:
                 # revert all the placing event in the last step
@@ -362,7 +356,7 @@ class Voyager:
 
     def learn(self, reset_env=True):
         print(f"\033[32m===Starting learning process===\033[0m")
-        
+
         try:
             if self.resume:
                 # keep the inventory
@@ -387,21 +381,35 @@ class Voyager:
                 print(f"\033[31m===Minecraft Connection Error===\033[0m")
                 print(f"\033[31mError: {e}\033[0m")
                 print(f"\033[31mThis error typically means:\033[0m")
-                print(f"\033[31m1. Minecraft server is not running on port {self.env.mc_port}\033[0m")
-                print(f"\033[31m2. Minecraft server is not properly configured for Voyager\033[0m")
-                print(f"\033[31m3. Mineflayer bot cannot connect to the Minecraft world\033[0m")
+                print(
+                    f"\033[31m1. Minecraft server is not running on port {self.env.mc_port}\033[0m"
+                )
+                print(
+                    f"\033[31m2. Minecraft server is not properly configured for Voyager\033[0m"
+                )
+                print(
+                    f"\033[31m3. Mineflayer bot cannot connect to the Minecraft world\033[0m"
+                )
                 print(f"\033[31m\nPlease check:\033[0m")
                 print(f"\033[31m- Is Minecraft running and a world is open?\033[0m")
-                print(f"\033[31m- Is the world set to Creative mode and Peaceful difficulty?\033[0m")
+                print(
+                    f"\033[31m- Is the world set to Creative mode and Peaceful difficulty?\033[0m"
+                )
                 print(f"\033[31m- Is 'Open to LAN' enabled with cheats ON?\033[0m")
-                print(f"\033[31m- Is the correct port number ({self.env.mc_port}) being used?\033[0m")
-                print(f"\033[31m\nSee installation/minecraft_instance_install.md for setup instructions.\033[0m")
+                print(
+                    f"\033[31m- Is the correct port number ({self.env.mc_port}) being used?\033[0m"
+                )
+                print(
+                    f"\033[31m\nSee installation/minecraft_instance_install.md for setup instructions.\033[0m"
+                )
                 return
             else:
                 print(f"\033[31mUnexpected error during environment reset: {e}\033[0m")
                 return
         except Exception as e:
-            print(f"\033[31mUnexpected error during environment initialization: {e}\033[0m")
+            print(
+                f"\033[31mUnexpected error during environment initialization: {e}\033[0m"
+            )
             return
 
         while True:
@@ -501,4 +509,3 @@ class Voyager:
             print(
                 f"\033[35mFailed tasks: {', '.join(self.curriculum_agent.failed_tasks)}\033[0m"
             )
-

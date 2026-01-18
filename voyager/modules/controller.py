@@ -1,5 +1,5 @@
-
 import openai
+
 
 class CognitiveController:
     def __init__(self, model="gpt-4o-mini"):

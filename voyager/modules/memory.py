@@ -1,5 +1,5 @@
-
 from collections import deque
+
 
 class MemoryModule:
     def __init__(self, max_len=1000):
