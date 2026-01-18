@@ -1,5 +1,5 @@
-
 from openai import AsyncOpenAI
+
 
 class CognitiveController:
     def __init__(self, model="gpt-4o-mini", api_key=None, base_url=None):
@@ -22,4 +22,3 @@ class CognitiveController:
             temperature=0.5,
         )
         return response.choices[0].message.content.strip()
-

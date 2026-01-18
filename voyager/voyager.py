@@ -307,7 +307,11 @@ class Voyager:
                 + "\n\n"
                 + self.action_agent.summarize_chatlog(events)
             )
-            system_message = self.action_agent.render_system_message(skills=new_skills)
+            system_message = self.action_agent.render_system_message(
+                skills=new_skills,
+                goal=self.agent_state.goal,
+                decision=self.agent_state.last_action,
+            )
             human_message = self.action_agent.render_human_message(
                 events=events,
                 code=parsed_result["program_code"],

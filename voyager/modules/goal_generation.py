@@ -1,5 +1,5 @@
-
 from openai import AsyncOpenAI
+
 
 class GoalGenerationModule:
     def __init__(self, model="gpt-4o-mini", api_key=None, base_url=None):
@@ -20,4 +20,3 @@ class GoalGenerationModule:
             temperature=0.7,
         )
         return response.choices[0].message.content.strip()
-
