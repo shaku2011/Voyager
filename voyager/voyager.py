@@ -159,8 +159,8 @@ class Voyager:
             base_url=critic_agent_base_url,
         )
 
-        goal_model = os.getenv("VOYAGER_GOAL_MODEL", "gpt-4")
-        controller_model = os.getenv("VOYAGER_CONTROLLER_MODEL", "gpt-4")
+        goal_model = os.getenv("VOYAGER_GOAL_MODEL", "gpt-4o-mini")
+        controller_model = os.getenv("VOYAGER_CONTROLLER_MODEL", "gpt-4o-mini")
 
         self.agent_state = AgentState()
         self.agent_state.memory = MemoryModule()
