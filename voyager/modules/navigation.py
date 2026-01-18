@@ -4,7 +4,17 @@ class NavigationModule:
 
     def choose_direction(self):
         import random
-        directions = [(1, 0), (0, 1), (-1, 0), (0, -1), (1, 1), (-1, -1), (1, -1), (-1, 1)]
+
+        directions = [
+            (1, 0),
+            (0, 1),
+            (-1, 0),
+            (0, -1),
+            (1, 1),
+            (-1, -1),
+            (1, -1),
+            (-1, 1),
+        ]
         self.last_direction = random.choice(directions)
         return self.last_direction
 

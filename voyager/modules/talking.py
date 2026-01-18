@@ -1,5 +1,6 @@
 from openai import AsyncOpenAI
 
+
 class TalkingModule:
     def __init__(self, model="gpt-4o-mini", name="agent"):
         self.llm = AsyncOpenAI()
@@ -10,14 +11,15 @@ class TalkingModule:
     async def speak(self, prompt, bot=None):
         chat_log = self.chat_history[-3:]  # include recent context
         messages = [
-            {"role": "system", "content": "You are a reflective Minecraft agent who explains your current goal and decision clearly."},
-            {"role": "user", "content": prompt}
+            {
+                "role": "system",
+                "content": "You are a reflective Minecraft agent who explains your current goal and decision clearly.",
+            },
+            {"role": "user", "content": prompt},
         ]
         try:
             response = await self.llm.chat.completions.create(
-                model=self.model,
-                messages=messages,
-                temperature=0.7
+                model=self.model, messages=messages, temperature=0.7
             )
             reply = response.choices[0].message.content.strip()
         except Exception as e:

@@ -103,7 +103,9 @@ class ActionAgent:
 
         # --- PIANO integration (safe fallback) ---
         goal_str = goal if goal is not None else "No explicit goal provided."
-        decision_str = decision if decision is not None else "No controller decision provided."
+        decision_str = (
+            decision if decision is not None else "No controller decision provided."
+        )
 
         system_message_prompt = SystemMessagePromptTemplate.from_template(
             system_template

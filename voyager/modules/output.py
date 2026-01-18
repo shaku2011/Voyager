@@ -1,5 +1,6 @@
 from openai import AsyncOpenAI
 
+
 class OutputModule:
     def __init__(self, name="agent", model="gpt-4o-mini"):
         self.name = name
@@ -31,18 +32,23 @@ class OutputModule:
 
     async def why_failed(self, task, last_chatlog, bot=None):
         messages = [
-            {"role": "system", "content": "You are a helpful assistant that explains why a Minecraft agent failed to complete a task."},
-            {"role": "user", "content": f"The task was: {task}
+            {
+                "role": "system",
+                "content": "You are a helpful assistant that explains why a Minecraft agent failed to complete a task.",
+            },
+            {
+                "role": "user",
+                "content": f"""The task was: {task}
+
 Here's the final log:
 {last_chatlog}
 
-Why did I fail?"}
+Why did I fail?""",
+            },
         ]
         try:
             result = await self.llm.chat.completions.create(
-                model=self.model,
-                messages=messages,
-                temperature=0.7
+                model=self.model, messages=messages, temperature=0.7
             )
             explanation = result.choices[0].message.content.strip()
         except Exception as e:
