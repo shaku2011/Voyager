@@ -12,6 +12,13 @@ from .agents import CriticAgent
 from .agents import CurriculumAgent
 from .agents import SkillManager
 
+from voyager.modules.memory import MemoryModule
+from voyager.modules.goal_generation import GoalGenerationModule
+from voyager.modules.controller import CognitiveController
+from voyager.modules.state import AgentState
+import asyncio
+
+
 
 # TODO: remove event memory
 class Voyager:
@@ -152,6 +159,15 @@ class Voyager:
             mode=critic_agent_mode,
             base_url=critic_agent_base_url,
         )
+
+        goal_model = os.getenv("VOYAGER_GOAL_MODEL", "gpt-4o-mini")
+        controller_model = os.getenv("VOYAGER_CONTROLLER_MODEL", "gpt-4o-mini")
+
+        self.agent_state = AgentState()
+        self.agent_state.memory = MemoryModule()
+        self.goal_generator = GoalGenerationModule(model=goal_model)
+        self.controller = CognitiveController(model=controller_model)
+
         self.skill_manager = SkillManager(
             model_name=skill_manager_model_name,
             temperature=skill_manager_temperature,
@@ -213,21 +229,58 @@ class Voyager:
     def step(self):
         if self.action_agent_rollout_num_iter < 0:
             raise ValueError("Agent must be reset before stepping")
+
+        # === [PIANO] Observation → MemoryModule ===
+        try:
+            observation_summary = self.env.observe_summary()
+        except:
+            observation_summary = "No new observation."
+        self.agent_state.memory.append(observation_summary)
+
+        # === [PIANO] Memory → Goal Generation ===
+        memory_summary = self.agent_state.memory.summarize()
+        try:
+            self.agent_state.goal = asyncio.run(
+                self.goal_generator.generate_goal(memory_summary)
+            )
+            print(f"[PIANO Goal] {self.agent_state.goal}")
+        except Exception as e:
+            print(f"[Goal Generation Error]: {e}")
+            self.agent_state.goal = "Continue previous task."
+
+        # === [PIANO] Goal + Memory → Cognitive Controller Decision ===
+        try:
+            self.agent_state.last_action = asyncio.run(
+                self.controller.decide_action(self.agent_state.goal, memory_summary)
+            )
+            print(f"[PIANO Controller Decision]: {self.agent_state.last_action}")
+        except Exception as e:
+            print(f"[Controller Error]: {e}")
+            self.agent_state.last_action = "Continue with current plan."
+
+        # === Original Voyager step logic ===
         ai_message = self.action_agent.llm.invoke(self.messages)
-        print(f"\033[34m****Action Agent ai message****\n{ai_message.content}\033[0m")
+        print(f"[34m****Action Agent ai message****
+{ai_message.content}[0m")
+
         self.conversations.append(
             (self.messages[0].content, self.messages[1].content, ai_message.content)
         )
+
         parsed_result = self.action_agent.process_ai_message(message=ai_message)
+
         success = False
         if isinstance(parsed_result, dict):
-            code = parsed_result["program_code"] + "\n" + parsed_result["exec_code"]
+            code = parsed_result["program_code"] + "
+" + parsed_result["exec_code"]
             events = self.env.step(
                 code,
                 programs=self.skill_manager.programs,
             )
+
             self.recorder.record(events, self.task)
             self.action_agent.update_chest_memory(events[-1][1]["nearbyChests"])
+
             success, critique = self.critic_agent.check_task_success(
                 events=events,
                 task=self.task,
@@ -235,6 +288,8 @@ class Voyager:
                 chest_observation=self.action_agent.render_chest_observation(),
                 max_retries=5,
             )
+
+        return success
 
             if self.reset_placed_if_failed and not success:
                 # revert all the placing event in the last step
