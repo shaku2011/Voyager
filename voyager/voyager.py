@@ -16,6 +16,9 @@ from voyager.modules.memory import MemoryModule
 from voyager.modules.goal_generation import GoalGenerationModule
 from voyager.modules.controller import CognitiveController
 from voyager.modules.state import AgentState
+from voyager.modules.navigation import NavigationModule
+from voyager.modules.talking import TalkingModule
+from voyager.modules.output import OutputModule
 import asyncio
 
 
@@ -166,6 +169,11 @@ class Voyager:
         self.agent_state.memory = MemoryModule()
         self.goal_generator = GoalGenerationModule(model=goal_model)
         self.controller = CognitiveController(model=controller_model)
+        self.navigation = NavigationModule()
+        self.talking = TalkingModule()
+
+        bot_name = os.environ["BOT_NAME"]
+        self.output = OutputModule(name=bot_name)
 
         self.skill_manager = SkillManager(
             model_name=skill_manager_model_name,
@@ -225,7 +233,7 @@ class Voyager:
     def close(self):
         self.env.close()
 
-    def step(self):
+    async def step(self):
         if self.action_agent_rollout_num_iter < 0:
             raise ValueError("Agent must be reset before stepping")
 
@@ -248,6 +256,17 @@ class Voyager:
             self.agent_state.goal = "Continue previous task."
 
         # === [PIANO] Goal + Memory → Cognitive Controller Decision ===
+        await self.talking.explain_goal(self.agent_state.goal)
+        await self.talking.explain_decision(self.agent_state.last_action)
+        nav_instruction = self.navigation.get_instruction()
+        self.agent_state.goal += f"\n[Navigation]: {nav_instruction}"
+        self.talking.explain_goal(self.agent_state.goal)
+        self.talking.explain_decision(self.agent_state.last_action)
+        nav_instruction = self.navigation.get_instruction()
+        self.agent_state.goal += f"\n[Navigation]: {nav_instruction}"
+        self.output.describe_goal(self.agent_state.goal)
+        self.output.describe_decision(self.agent_state.last_action)
+        self.output.report_observation(observation_summary)
         try:
             self.agent_state.last_action = asyncio.run(
                 self.controller.decide_action(self.agent_state.goal, memory_summary)
@@ -322,6 +341,8 @@ class Voyager:
             self.last_events = copy.deepcopy(events)
             self.messages = [system_message, human_message]
         else:
+            self.output.announce_failure(self.task)
+            await self.output.why_failed(self.task, self.messages[-1].content)
             assert isinstance(parsed_result, str)
             self.recorder.record([], self.task)
             print(f"\033[34m{parsed_result} Trying again!\033[0m")
@@ -343,6 +364,8 @@ class Voyager:
             info["program_code"] = parsed_result["program_code"]
             info["program_name"] = parsed_result["program_name"]
         else:
+            self.output.announce_failure(self.task)
+            await self.output.why_failed(self.task, self.messages[-1].content)
             print(
                 f"\033[32m****Action Agent human message****\n{self.messages[-1].content}\033[0m"
             )
@@ -369,6 +392,8 @@ class Voyager:
                     }
                 )
             else:
+                self.output.announce_failure(self.task)
+                await self.output.why_failed(self.task, self.messages[-1].content)
                 # clear the inventory
                 self.env.reset(
                     options={
@@ -406,6 +431,8 @@ class Voyager:
                 )
                 return
             else:
+                self.output.announce_failure(self.task)
+                await self.output.why_failed(self.task, self.messages[-1].content)
                 print(f"\033[31mUnexpected error during environment reset: {e}\033[0m")
                 return
         except Exception as e:
@@ -453,6 +480,7 @@ class Voyager:
                 print(f"\033[41m{e}\033[0m")
 
             if info["success"]:
+                self.output.announce_success(self.task)
                 self.skill_manager.add_new_skill(info)
 
             self.curriculum_agent.update_exploration_progress(info)
