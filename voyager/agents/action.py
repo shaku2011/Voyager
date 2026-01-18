@@ -80,8 +80,9 @@ class ActionAgent:
         else:
             return f"Chests: None\n\n"
 
-    def render_system_message(self, skills=[]):
+    def render_system_message(self, skills=[], goal=None, decision=None):
         system_template = load_prompt("action_template")
+
         # FIXME: Hardcoded control_primitives
         base_skills = [
             "exploreUntil",
@@ -96,14 +97,25 @@ class ActionAgent:
                 "useChest",
                 "mineflayer",
             ]
+
         programs = "\n\n".join(load_control_primitives_context(base_skills) + skills)
         response_format = load_prompt("action_response_format")
+
+        # --- PIANO integration (safe fallback) ---
+        goal_str = goal if goal is not None else "No explicit goal provided."
+        decision_str = decision if decision is not None else "No controller decision provided."
+
         system_message_prompt = SystemMessagePromptTemplate.from_template(
             system_template
         )
+
         system_message = system_message_prompt.format(
-            programs=programs, response_format=response_format
+            programs=programs,
+            response_format=response_format,
+            goal=goal_str,
+            decision=decision_str,
         )
+
         assert isinstance(system_message, SystemMessage)
         return system_message
 
