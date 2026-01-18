@@ -309,14 +309,14 @@ class Voyager:
 
         try:
             if self.resume:
-                await self.env.reset(
+                self.env.reset(
                     options={
                         "mode": "soft",
                         "wait_ticks": self.env_wait_ticks,
                     }
                 )
             else:
-                await self.env.reset(
+                self.env.reset(
                     options={
                         "mode": "hard",
                         "wait_ticks": self.env_wait_ticks,
@@ -408,7 +408,7 @@ class Voyager:
 
     async def decompose_task(self, task):
         if not self.last_events:
-            self.last_events = await self.env.reset(
+            self.last_events = self.env.reset(
                 options={
                     "mode": "hard",
                     "wait_ticks": self.env_wait_ticks,
@@ -425,7 +425,7 @@ class Voyager:
         if not sub_goals:
             sub_goals = await self.decompose_task(task)
 
-        await self.env.reset(
+        self.env.reset(
             options={
                 "mode": reset_mode,
                 "wait_ticks": self.env_wait_ticks,
