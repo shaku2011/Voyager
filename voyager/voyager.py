@@ -1,3 +1,4 @@
+
 import copy
 import json
 import os
@@ -159,9 +160,11 @@ class Voyager:
             mode=critic_agent_mode,
             base_url=critic_agent_base_url,
         )
+        
+        import os
 
-        goal_model = os.getenv("VOYAGER_GOAL_MODEL", "gpt-4o-mini")
-        controller_model = os.getenv("VOYAGER_CONTROLLER_MODEL", "gpt-4o-mini")
+        goal_model = os.getenv("VOYAGER_GOAL_MODEL", "gpt-4")
+        controller_model = os.getenv("VOYAGER_CONTROLLER_MODEL", "gpt-4")
 
         self.agent_state = AgentState()
         self.agent_state.memory = MemoryModule()
@@ -226,6 +229,7 @@ class Voyager:
     def close(self):
         self.env.close()
 
+    
     def step(self):
         if self.action_agent_rollout_num_iter < 0:
             raise ValueError("Agent must be reset before stepping")
@@ -260,8 +264,7 @@ class Voyager:
 
         # === Original Voyager step logic ===
         ai_message = self.action_agent.llm.invoke(self.messages)
-        print(f"[34m****Action Agent ai message****
-{ai_message.content}[0m")
+        print(f"\033[34m****Action Agent ai message****\n{ai_message.content}\033[0m")
 
         self.conversations.append(
             (self.messages[0].content, self.messages[1].content, ai_message.content)
@@ -498,3 +501,4 @@ class Voyager:
             print(
                 f"\033[35mFailed tasks: {', '.join(self.curriculum_agent.failed_tasks)}\033[0m"
             )
+
