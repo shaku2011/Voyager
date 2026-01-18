@@ -269,7 +269,7 @@ class Voyager:
             self.last_events = copy.deepcopy(events)
             self.messages = [system_message, human_message]
         else:
-            await self.output.announce_failure(self.task)
+            self.output.announce_failure(self.task)
             await self.output.why_failed(self.task, self.messages[-1].content)
             self.recorder.record([], self.task)
             print(f"\033[34m{parsed_result} Trying again!\033[0m")
@@ -288,7 +288,7 @@ class Voyager:
             info["program_code"] = parsed_result["program_code"]
             info["program_name"] = parsed_result["program_name"]
         else:
-            await self.output.announce_failure(self.task)
+            self.output.announce_failure(self.task)
             await self.output.why_failed(self.task, self.messages[-1].content)
             print(
                 f"\033[32m****Action Agent human message****\n{self.messages[-1].content}\033[0m"
@@ -389,7 +389,7 @@ class Voyager:
                 print(f"\033[41m{e}\033[0m")
 
             if info["success"]:
-                await self.output.announce_success(self.task)
+                self.output.announce_success(self.task)
                 self.skill_manager.add_new_skill(info)
 
             self.curriculum_agent.update_exploration_progress(info)
