@@ -404,7 +404,7 @@ class Voyager:
             print(f"[DEBUG] progress before = {self.curriculum_agent.progress}")
             self.curriculum_agent.update_exploration_progress(info)
             print(f"[DEBUG] progress after  = {self.curriculum_agent.progress}")
-            print(f"[DEBUG] Expected task: {sub_goals[self.curriculum_agent.progress]}")
+            print(f"[DEBUG] Expected task: {task}")
             print(f"[DEBUG] Completed task from info: {info['task']}")
             print(
                 f"\033[35mCompleted tasks: {', '.join(self.curriculum_agent.completed_tasks)}\033[0m"
