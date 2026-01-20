@@ -270,7 +270,8 @@ class Voyager:
             self.messages = [system_message, human_message]
         else:
             await self.output.announce_failure(self.task)
-            await self.output.why_failed(self.task, self.messages[-1].content)
+            reason = await self.output.why_failed(self.task, self.messages[-1].content)
+            self.agent_state.memory.append(f"[Failure Reason] {reason}")
             self.recorder.record([], self.task)
             print(f"\033[34m{parsed_result} Trying again!\033[0m")
 
