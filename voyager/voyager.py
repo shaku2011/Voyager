@@ -194,8 +194,8 @@ class Voyager:
         nav_instruction = self.navigation.get_instruction()
         self.agent_state.goal += f"\n[Navigation]: {nav_instruction}"
 
-        await self.talking.explain_goal(self.agent_state.goal)
-        await self.talking.explain_decision(self.agent_state.last_action)
+        # await self.talking.explain_goal(self.agent_state.goal)
+        # await self.talking.explain_decision(self.agent_state.last_action)
 
         await self.output.describe_goal(self.agent_state.goal)
         await self.output.describe_decision(self.agent_state.last_action)
@@ -210,6 +210,35 @@ class Voyager:
         except Exception as e:
             print(f"[Controller Error]: {e}")
             self.agent_state.last_action = "Continue with current plan."
+
+        #############################################################################
+        ##TODO MSGの更新 self.resetと同様のcode
+        difficulty = (
+            "easy" if len(self.curriculum_agent.completed_tasks) > 15 else "peaceful"
+        )
+        events = self.env.step(
+            "bot.chat(`/time set ${getNextTime()}`);\n"
+            + f"bot.chat('/difficulty {difficulty}');"
+            )
+        # === 新しいメッセージを構築 ===
+        new_skills = self.skill_manager.retrieve_skills(
+            query=self.context + "\n\n" + memory_summary
+        )
+        system_message = self.action_agent.render_system_message(
+            skills=new_skills,
+            goal=self.agent_state.goal,
+            decision=self.agent_state.last_action,
+        )
+        human_message = self.action_agent.render_human_message(
+            events=[],  # 最新 events がない場合は空でもよい
+            code="",    # 前回コードが不要なら空
+            task=self.task,
+            context=self.context + f"\n\n[Observation]: {observation_summary}",
+            critique="",  # 評価がまだない場合は空
+        )
+        self.messages = [system_message, human_message]
+
+        #############################################################################
 
         # === ActionAgent 実行 ===
         ai_message = await self.action_agent.llm.ainvoke(self.messages)
