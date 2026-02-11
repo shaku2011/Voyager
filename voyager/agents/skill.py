@@ -46,39 +46,57 @@ class SkillManager:
             embedding_function=OpenAIEmbeddings(),
             persist_directory=f"{ckpt_dir}/skill/vectordb",
         )
-        
+
         # Handle vectordb sync issues gracefully
         vectordb_count = self.vectordb._collection.count()
         skills_count = len(self.skills)
-        
+
         if vectordb_count != skills_count:
-            print(f"\033[33mWarning: Skill Manager's vectordb is not synced with skills.json.\033[0m")
-            print(f"\033[33mThere are {vectordb_count} skills in vectordb but {skills_count} skills in skills.json.\033[0m")
-            
+            print(
+                f"\033[33mWarning: Skill Manager's vectordb is not synced with skills.json.\033[0m"
+            )
+            print(
+                f"\033[33mThere are {vectordb_count} skills in vectordb but {skills_count} skills in skills.json.\033[0m"
+            )
+
             if not resume and vectordb_count > 0:
-                print(f"\033[33mClearing vectordb to start fresh since resume=False.\033[0m")
+                print(
+                    f"\033[33mClearing vectordb to start fresh since resume=False.\033[0m"
+                )
                 # Clear the vectordb collection by deleting all documents
                 try:
                     # Get all IDs first
                     all_data = self.vectordb.get()
-                    if all_data['ids']:
-                        self.vectordb.delete(ids=all_data['ids'])
-                    print(f"\033[33mSkill vectordb cleared. Now synced with empty skills.\033[0m")
+                    if all_data["ids"]:
+                        self.vectordb.delete(ids=all_data["ids"])
+                    print(
+                        f"\033[33mSkill vectordb cleared. Now synced with empty skills.\033[0m"
+                    )
                 except Exception as e:
-                    print(f"\033[33mError clearing vectordb: {e}. Continuing anyway.\033[0m")
+                    print(
+                        f"\033[33mError clearing vectordb: {e}. Continuing anyway.\033[0m"
+                    )
             elif resume and vectordb_count == 0 and skills_count > 0:
-                print(f"\033[33mRebuilding vectordb from skills.json since resume=True.\033[0m")
+                print(
+                    f"\033[33mRebuilding vectordb from skills.json since resume=True.\033[0m"
+                )
                 # Rebuild vectordb from skills
                 for skill_name, entry in self.skills.items():
                     self.vectordb.add_texts(
-                        texts=[entry['description']],
+                        texts=[entry["description"]],
                         ids=[skill_name],
                         metadatas=[{"name": skill_name}],
                     )
-                print(f"\033[33mSkill vectordb rebuilt with {len(self.skills)} skills.\033[0m")
+                print(
+                    f"\033[33mSkill vectordb rebuilt with {len(self.skills)} skills.\033[0m"
+                )
             elif resume and vectordb_count > skills_count:
-                print(f"\033[33mSkill vectordb has more entries than skills.json. This might indicate data corruption.\033[0m")
-                print(f"\033[33mConsider deleting the vectordb directory manually if issues persist.\033[0m")
+                print(
+                    f"\033[33mSkill vectordb has more entries than skills.json. This might indicate data corruption.\033[0m"
+                )
+                print(
+                    f"\033[33mConsider deleting the vectordb directory manually if issues persist.\033[0m"
+                )
 
     @property
     def programs(self):
@@ -156,3 +174,12 @@ class SkillManager:
         for doc, _ in docs_and_scores:
             skills.append(self.skills[doc.metadata["name"]]["code"])
         return skills
+
+    def render_system_message(self, skills, goal=None, decision=None):
+        system_prompt = self.system_prompt + "\n\n"
+        if goal:
+            system_prompt += f"[PIANO Goal]\n{goal}\n\n"
+        if decision:
+            system_prompt += f"[Controller Decision]\n{decision}\n\n"
+        system_prompt += self.render_skills(skills)
+        return ChatMessage(role="system", content=system_prompt)

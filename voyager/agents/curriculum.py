@@ -36,7 +36,7 @@ class CurriculumAgent:
         if base_url:
             llm_kwargs["base_url"] = base_url
         self.llm = ChatOpenAI(**llm_kwargs)
-        
+
         qa_llm_kwargs = {
             "model": qa_model_name,
             "temperature": qa_temperature,
@@ -69,28 +69,40 @@ class CurriculumAgent:
             embedding_function=OpenAIEmbeddings(),
             persist_directory=f"{ckpt_dir}/curriculum/vectordb",
         )
-        
+
         # Handle vectordb sync issues gracefully
         vectordb_count = self.qa_cache_questions_vectordb._collection.count()
         qa_cache_count = len(self.qa_cache)
-        
+
         if vectordb_count != qa_cache_count:
-            print(f"\033[33mWarning: Curriculum Agent's qa cache vectordb is not synced with qa_cache.json.\033[0m")
-            print(f"\033[33mThere are {vectordb_count} questions in vectordb but {qa_cache_count} questions in qa_cache.json.\033[0m")
-            
+            print(
+                f"\033[33mWarning: Curriculum Agent's qa cache vectordb is not synced with qa_cache.json.\033[0m"
+            )
+            print(
+                f"\033[33mThere are {vectordb_count} questions in vectordb but {qa_cache_count} questions in qa_cache.json.\033[0m"
+            )
+
             if not resume and vectordb_count > 0:
-                print(f"\033[33mClearing vectordb to start fresh since resume=False.\033[0m")
+                print(
+                    f"\033[33mClearing vectordb to start fresh since resume=False.\033[0m"
+                )
                 # Clear the vectordb collection by deleting all documents
                 try:
                     # Get all IDs first
                     all_data = self.qa_cache_questions_vectordb.get()
-                    if all_data['ids']:
-                        self.qa_cache_questions_vectordb.delete(ids=all_data['ids'])
-                    print(f"\033[33mVectordb cleared. Now synced with empty qa_cache.\033[0m")
+                    if all_data["ids"]:
+                        self.qa_cache_questions_vectordb.delete(ids=all_data["ids"])
+                    print(
+                        f"\033[33mVectordb cleared. Now synced with empty qa_cache.\033[0m"
+                    )
                 except Exception as e:
-                    print(f"\033[33mError clearing vectordb: {e}. Continuing anyway.\033[0m")
+                    print(
+                        f"\033[33mError clearing vectordb: {e}. Continuing anyway.\033[0m"
+                    )
             elif resume and vectordb_count == 0 and qa_cache_count > 0:
-                print(f"\033[33mRebuilding vectordb from qa_cache.json since resume=True.\033[0m")
+                print(
+                    f"\033[33mRebuilding vectordb from qa_cache.json since resume=True.\033[0m"
+                )
                 # Rebuild vectordb from qa_cache
                 for question in self.qa_cache.keys():
                     self.qa_cache_questions_vectordb.add_texts(
@@ -98,10 +110,16 @@ class CurriculumAgent:
                         ids=[question],
                         metadatas=[{"type": "question"}],
                     )
-                print(f"\033[33mVectordb rebuilt with {len(self.qa_cache)} questions.\033[0m")
+                print(
+                    f"\033[33mVectordb rebuilt with {len(self.qa_cache)} questions.\033[0m"
+                )
             elif resume and vectordb_count > qa_cache_count:
-                print(f"\033[33mVectordb has more entries than qa_cache. This might indicate data corruption.\033[0m")
-                print(f"\033[33mConsider deleting the vectordb directory manually if issues persist.\033[0m")
+                print(
+                    f"\033[33mVectordb has more entries than qa_cache. This might indicate data corruption.\033[0m"
+                )
+                print(
+                    f"\033[33mConsider deleting the vectordb directory manually if issues persist.\033[0m"
+                )
         # if warm up not defined, initialize it as a dict, else, initialize all the missing value as a default value
         if not warm_up:
             warm_up = self.default_warmup
@@ -174,18 +192,18 @@ class CurriculumAgent:
         if not events:
             print(f"\033[31mError: events list is empty\033[0m")
             return self._get_default_observation(chest_observation)
-        
+
         if len(events) == 0:
             print(f"\033[31mError: events list has no elements\033[0m")
             return self._get_default_observation(chest_observation)
-            
+
         try:
             assert events[-1][0] == "observe", "Last event must be observe"
             event = events[-1][1]
         except (IndexError, KeyError, TypeError) as e:
             print(f"\033[31mError accessing event data: {e}\033[0m")
             return self._get_default_observation(chest_observation)
-        
+
         try:
             biome = event["status"]["biome"]
             time_of_day = event["status"]["timeOfDay"]
@@ -352,7 +370,7 @@ class CurriculumAgent:
                                 "You can use bot.inventoryUsed() to check how many inventory slots are used."
                             )
                             return task, context
-            
+
             try:
                 if "chest" in events[-1][1]["inventory"]:
                     task = "Place a chest"
@@ -365,7 +383,9 @@ class CurriculumAgent:
                     context = "Craft 1 chest with 8 planks of any kind of wood."
                 return task, context
             except (IndexError, KeyError, TypeError) as e:
-                print(f"\033[31mError accessing inventory in propose_next_task: {e}\033[0m")
+                print(
+                    f"\033[31mError accessing inventory in propose_next_task: {e}\033[0m"
+                )
                 task = "Craft 1 chest"
                 context = "Craft 1 chest with 8 planks of any kind of wood."
                 return task, context
@@ -543,9 +563,11 @@ class CurriculumAgent:
     def run_qa_step1_ask_questions(self, *, events, chest_observation):
         # Validate events before accessing
         if not events or len(events) == 0:
-            print(f"\033[31mError: events list is empty in run_qa_step1_ask_questions\033[0m")
+            print(
+                f"\033[31mError: events list is empty in run_qa_step1_ask_questions\033[0m"
+            )
             return [], []
-        
+
         try:
             biome = events[-1][1]["status"]["biome"].replace("_", " ")
         except (IndexError, KeyError, TypeError) as e:

@@ -11,5 +11,6 @@ def load_prompt(prompt):
     except (AttributeError, TypeError):
         # Fallback for older Python versions
         import pkg_resources
+
         package_path = pkg_resources.resource_filename("voyager", "")
         return U.load_text(f"{package_path}/prompts/{prompt}.txt")

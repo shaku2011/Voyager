@@ -32,7 +32,7 @@ class ActionAgent:
             self.chest_memory = U.load_json(f"{ckpt_dir}/action/chest_memory.json")
         else:
             self.chest_memory = {}
-        
+
         llm_kwargs = {
             "model": model_name,
             "temperature": temperature,
@@ -40,7 +40,7 @@ class ActionAgent:
         }
         if base_url:
             llm_kwargs["base_url"] = base_url
-        
+
         self.llm = ChatOpenAI(**llm_kwargs)
 
     def update_chest_memory(self, chests):
@@ -55,7 +55,9 @@ class ActionAgent:
                     self.chest_memory.pop(position)
             else:
                 if chest != "Invalid":
-                    print(f"\033[32mAction Agent saving chest {position}: {chest}\033[0m")
+                    print(
+                        f"\033[32mAction Agent saving chest {position}: {chest}\033[0m"
+                    )
                     self.chest_memory[position] = chest
         U.dump_json(self.chest_memory, f"{self.ckpt_dir}/action/chest_memory.json")
 
@@ -78,8 +80,9 @@ class ActionAgent:
         else:
             return f"Chests: None\n\n"
 
-    def render_system_message(self, skills=[]):
+    def render_system_message(self, skills=[], goal=None, decision=None):
         system_template = load_prompt("action_template")
+
         # FIXME: Hardcoded control_primitives
         base_skills = [
             "exploreUntil",
@@ -94,14 +97,27 @@ class ActionAgent:
                 "useChest",
                 "mineflayer",
             ]
+
         programs = "\n\n".join(load_control_primitives_context(base_skills) + skills)
         response_format = load_prompt("action_response_format")
+
+        # --- PIANO integration (safe fallback) ---
+        goal_str = goal if goal is not None else "No explicit goal provided."
+        decision_str = (
+            decision if decision is not None else "No controller decision provided."
+        )
+
         system_message_prompt = SystemMessagePromptTemplate.from_template(
             system_template
         )
+
         system_message = system_message_prompt.format(
-            programs=programs, response_format=response_format
+            programs=programs,
+            response_format=response_format,
+            goal=goal_str,
+            decision=decision_str,
         )
+
         assert isinstance(system_message, SystemMessage)
         return system_message
 

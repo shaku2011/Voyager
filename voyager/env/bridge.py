@@ -346,3 +346,54 @@ class VoyagerEnv(gym.Env):
         except Exception as e:
             print(f"❌ Error sending chat message: {e}")
             return False
+
+    def observe_summary(self) -> str:
+        if not hasattr(self, "last_events"):
+            return "No observation yet."
+
+        status = {}
+        inventory = {}
+        nearby_blocks = []
+        nearby_entities = []
+        chat_messages = []
+
+        for event_type, event in self.last_events:
+            if event_type == "status":
+                status = event
+
+            elif event_type == "inventory":
+                inventory = event.get("inventory", {})
+
+            elif event_type == "voxels":
+                nearby_blocks = event.get("voxels", [])
+
+            elif event_type == "entities":
+                nearby_entities = event.get("entities", [])
+
+            elif event_type == "onChat":
+                chat_messages.append(event.get("message"))
+
+        summary = []
+
+        if status:
+            pos = status.get("position", {})
+            summary.append(
+                f"Location: ({pos.get('x')}, {pos.get('y')}, {pos.get('z')}), "
+                f"Health: {status.get('health')}, "
+                f"Biome: {status.get('biome', 'unknown')}"
+            )
+
+        if inventory:
+            summary.append(f"Inventory: {inventory}")
+
+        if nearby_blocks:
+            summary.append(f"Nearby blocks: {nearby_blocks[:5]}")
+
+        if nearby_entities:
+            summary.append(f"Nearby entities: {nearby_entities}")
+
+        if chat_messages:
+            summary.append("Recent chat:")
+            summary.extend([f"- {m}" for m in chat_messages[-3:]])
+
+        return "\n".join(summary) if summary else "Nothing notable observed."

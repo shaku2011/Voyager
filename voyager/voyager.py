@@ -1,7 +1,6 @@
 import copy
 import json
 import os
-import time
 from typing import Dict, Union
 
 import voyager.utils as U
@@ -12,8 +11,16 @@ from .agents import CriticAgent
 from .agents import CurriculumAgent
 from .agents import SkillManager
 
+from voyager.modules.memory import MemoryModule
+from voyager.modules.goal_generation import GoalGenerationModule
+from voyager.modules.controller import CognitiveController
+from voyager.modules.state import AgentState
+from voyager.modules.navigation import NavigationModule
+from voyager.modules.talking import TalkingModule
+from voyager.modules.output import OutputModule
+import asyncio
 
-# TODO: remove event memory
+
 class Voyager:
     def __init__(
         self,
@@ -54,58 +61,6 @@ class Voyager:
         skill_library_dir: str = None,
         resume: bool = False,
     ):
-        """
-        The main class for Voyager.
-        Action agent is the iterative prompting mechanism in paper.
-        Curriculum agent is the automatic curriculum in paper.
-        Critic agent is the self-verification in paper.
-        Skill manager is the skill library in paper.
-        :param mc_port: minecraft in-game port
-        :param azure_login: minecraft login config
-        :param server_port: mineflayer port
-        :param openai_api_key: openai api key
-        :param env_wait_ticks: how many ticks at the end each step will wait, if you found some chat log missing,
-        you should increase this value
-        :param env_request_timeout: how many seconds to wait for each step, if the code execution exceeds this time,
-        python side will terminate the connection and need to be resumed
-        :param reset_placed_if_failed: whether to reset placed blocks if failed, useful for building task
-        :param action_agent_model_name: action agent model name
-        :param action_agent_temperature: action agent temperature
-        :param action_agent_task_max_retries: how many times to retry if failed
-        :param curriculum_agent_model_name: curriculum agent model name
-        :param curriculum_agent_temperature: curriculum agent temperature
-        :param curriculum_agent_qa_model_name: curriculum agent qa model name
-        :param curriculum_agent_qa_temperature: curriculum agent qa temperature
-        :param curriculum_agent_warm_up: info will show in curriculum human message
-        if completed task larger than the value in dict, available keys are:
-        {
-            "context": int,
-            "biome": int,
-            "time": int,
-            "other_blocks": int,
-            "nearby_entities": int,
-            "health": int,
-            "hunger": int,
-            "position": int,
-            "equipment": int,
-            "chests": int,
-            "optional_inventory_items": int,
-        }
-        :param curriculum_agent_core_inventory_items: only show these items in inventory before optional_inventory_items
-        reached in warm up
-        :param curriculum_agent_mode: "auto" for automatic curriculum, "manual" for human curriculum
-        :param critic_agent_model_name: critic agent model name
-        :param critic_agent_temperature: critic agent temperature
-        :param critic_agent_mode: "auto" for automatic critic ,"manual" for human critic
-        :param skill_manager_model_name: skill manager model name
-        :param skill_manager_temperature: skill manager temperature
-        :param skill_manager_retrieval_top_k: how many skills to retrieve for each task
-        :param openai_api_request_timeout: how many seconds to wait for openai api
-        :param ckpt_dir: checkpoint dir
-        :param skill_library_dir: skill library dir
-        :param resume: whether to resume from checkpoint
-        """
-        # init env
         self.env = VoyagerEnv(
             mc_port=mc_port,
             azure_login=azure_login,
@@ -116,10 +71,8 @@ class Voyager:
         self.reset_placed_if_failed = reset_placed_if_failed
         self.max_iterations = max_iterations
 
-        # set openai api key
         os.environ["OPENAI_API_KEY"] = openai_api_key
 
-        # init agents
         self.action_agent = ActionAgent(
             model_name=action_agent_model_name,
             temperature=action_agent_temperature,
@@ -131,6 +84,7 @@ class Voyager:
             base_url=action_agent_base_url,
         )
         self.action_agent_task_max_retries = action_agent_task_max_retries
+
         self.curriculum_agent = CurriculumAgent(
             model_name=curriculum_agent_model_name,
             temperature=curriculum_agent_temperature,
@@ -152,6 +106,18 @@ class Voyager:
             mode=critic_agent_mode,
             base_url=critic_agent_base_url,
         )
+
+        goal_model = os.getenv("VOYAGER_GOAL_MODEL", "gpt-4.1-nano")
+        controller_model = os.getenv("VOYAGER_CONTROLLER_MODEL", "gpt-4.1-nano")
+
+        self.agent_state = AgentState()
+        self.agent_state.memory = MemoryModule()
+        self.goal_generator = GoalGenerationModule(model=goal_model)
+        self.controller = CognitiveController(model=controller_model)
+        self.navigation = NavigationModule()
+        self.talking = TalkingModule()
+        self.output = OutputModule(name=os.environ.get("BOT_NAME", "bot"))
+
         self.skill_manager = SkillManager(
             model_name=skill_manager_model_name,
             temperature=skill_manager_temperature,
@@ -161,10 +127,10 @@ class Voyager:
             resume=True if resume or skill_library_dir else False,
             base_url=skill_manager_base_url,
         )
+
         self.recorder = U.EventRecorder(ckpt_dir=ckpt_dir, resume=resume)
         self.resume = resume
 
-        # init variables for rollout
         self.action_agent_rollout_num_iter = -1
         self.task = None
         self.context = ""
@@ -186,48 +152,111 @@ class Voyager:
         difficulty = (
             "easy" if len(self.curriculum_agent.completed_tasks) > 15 else "peaceful"
         )
-        # step to peek an observation
         events = self.env.step(
             "bot.chat(`/time set ${getNextTime()}`);\n"
             + f"bot.chat('/difficulty {difficulty}');"
         )
         skills = self.skill_manager.retrieve_skills(query=self.context)
-        print(
-            f"\033[33mRender Action Agent system message with {len(skills)} skills\033[0m"
-        )
         system_message = self.action_agent.render_system_message(skills=skills)
         human_message = self.action_agent.render_human_message(
             events=events, code="", task=self.task, context=context, critique=""
         )
         self.messages = [system_message, human_message]
-        print(
-            f"\033[32m****Action Agent human message****\n{human_message.content}\033[0m"
-        )
-        assert len(self.messages) == 2
         self.conversations = []
         return self.messages
 
     def close(self):
         self.env.close()
 
-    def step(self):
+    async def step(self):
         if self.action_agent_rollout_num_iter < 0:
             raise ValueError("Agent must be reset before stepping")
-        ai_message = self.action_agent.llm.invoke(self.messages)
+
+        # === [PIANO] Observation → MemoryModule ===
+        try:
+            observation_summary = self.env.observe_summary()
+        except Exception:
+            observation_summary = "No new observation."
+        self.agent_state.memory.append(observation_summary)
+
+        # === [PIANO] Memory → Goal Generation ===
+        memory_summary = self.agent_state.memory.summarize()
+        try:
+            self.agent_state.goal = await self.goal_generator.generate_goal(
+                memory_summary
+            )
+            print(f"[PIANO Goal] {self.agent_state.goal}")
+        except Exception as e:
+            print(f"[Goal Generation Error]: {e}")
+            self.agent_state.goal = "Continue previous task."
+
+        # === [PIANO] Navigation + Talking ===
+        nav_instruction = self.navigation.get_instruction()
+        self.agent_state.goal += f"\n[Navigation]: {nav_instruction}"
+
+        # await self.talking.explain_goal(self.agent_state.goal)
+        # await self.talking.explain_decision(self.agent_state.last_action)
+
+        await self.output.describe_goal(self.agent_state.goal)
+        await self.output.describe_decision(self.agent_state.last_action)
+        await self.output.report_observation(observation_summary)
+
+        # === [PIANO] Controller Decision ===
+        try:
+            self.agent_state.last_action = await self.controller.decide_action(
+                self.agent_state.goal, memory_summary
+            )
+            print(f"[PIANO Controller Decision]: {self.agent_state.last_action}")
+        except Exception as e:
+            print(f"[Controller Error]: {e}")
+            self.agent_state.last_action = "Continue with current plan."
+
+        #############################################################################
+        ##TODO MSGの更新 self.resetと同様のcode
+        difficulty = (
+            "easy" if len(self.curriculum_agent.completed_tasks) > 15 else "peaceful"
+        )
+        events = self.env.step(
+            "bot.chat(`/time set ${getNextTime()}`);\n"
+            + f"bot.chat('/difficulty {difficulty}');"
+            )
+        # === 新しいメッセージを構築 ===
+        new_skills = self.skill_manager.retrieve_skills(
+            query=self.context + "\n\n" + memory_summary
+        )
+        system_message = self.action_agent.render_system_message(
+            skills=new_skills,
+            goal=self.agent_state.goal,
+            decision=self.agent_state.last_action,
+        )
+        human_message = self.action_agent.render_human_message(
+            events=[],  # 最新 events がない場合は空でもよい
+            code="",    # 前回コードが不要なら空
+            task=self.task,
+            context=self.context + f"\n\n[Observation]: {observation_summary}",
+            critique="",  # 評価がまだない場合は空
+        )
+        self.messages = [system_message, human_message]
+
+        #############################################################################
+
+        # === ActionAgent 実行 ===
+        ai_message = await self.action_agent.llm.ainvoke(self.messages)
         print(f"\033[34m****Action Agent ai message****\n{ai_message.content}\033[0m")
+
         self.conversations.append(
             (self.messages[0].content, self.messages[1].content, ai_message.content)
         )
         parsed_result = self.action_agent.process_ai_message(message=ai_message)
+
         success = False
         if isinstance(parsed_result, dict):
             code = parsed_result["program_code"] + "\n" + parsed_result["exec_code"]
-            events = self.env.step(
-                code,
-                programs=self.skill_manager.programs,
-            )
+            events = self.env.step(code, programs=self.skill_manager.programs)
+
             self.recorder.record(events, self.task)
             self.action_agent.update_chest_memory(events[-1][1]["nearbyChests"])
+
             success, critique = self.critic_agent.check_task_success(
                 events=events,
                 task=self.task,
@@ -237,27 +266,28 @@ class Voyager:
             )
 
             if self.reset_placed_if_failed and not success:
-                # revert all the placing event in the last step
-                blocks = []
-                positions = []
+                blocks, positions = [], []
                 for event_type, event in events:
                     if event_type == "onSave" and event["onSave"].endswith("_placed"):
-                        block = event["onSave"].split("_placed")[0]
-                        position = event["status"]["position"]
-                        blocks.append(block)
-                        positions.append(position)
+                        blocks.append(event["onSave"].split("_placed")[0])
+                        positions.append(event["status"]["position"])
                 new_events = self.env.step(
                     f"await givePlacedItemBack(bot, {U.json_dumps(blocks)}, {U.json_dumps(positions)})",
                     programs=self.skill_manager.programs,
                 )
                 events[-1][1]["inventory"] = new_events[-1][1]["inventory"]
                 events[-1][1]["voxels"] = new_events[-1][1]["voxels"]
+
             new_skills = self.skill_manager.retrieve_skills(
                 query=self.context
                 + "\n\n"
                 + self.action_agent.summarize_chatlog(events)
             )
-            system_message = self.action_agent.render_system_message(skills=new_skills)
+            system_message = self.action_agent.render_system_message(
+                skills=new_skills,
+                goal=self.agent_state.goal,
+                decision=self.agent_state.last_action,
+            )
             human_message = self.action_agent.render_human_message(
                 events=events,
                 code=parsed_result["program_code"],
@@ -268,10 +298,12 @@ class Voyager:
             self.last_events = copy.deepcopy(events)
             self.messages = [system_message, human_message]
         else:
-            assert isinstance(parsed_result, str)
+            await self.output.announce_failure(self.task)
+            reason = await self.output.why_failed(self.task, self.messages[-1].content)
+            self.agent_state.memory.append(f"[Failure Reason] {reason}")
             self.recorder.record([], self.task)
             print(f"\033[34m{parsed_result} Trying again!\033[0m")
-        assert len(self.messages) == 2
+
         self.action_agent_rollout_num_iter += 1
         done = (
             self.action_agent_rollout_num_iter >= self.action_agent_task_max_retries
@@ -283,31 +315,30 @@ class Voyager:
             "conversations": self.conversations,
         }
         if success:
-            assert (
-                "program_code" in parsed_result and "program_name" in parsed_result
-            ), "program and program_name must be returned when success"
             info["program_code"] = parsed_result["program_code"]
             info["program_name"] = parsed_result["program_name"]
         else:
+            await self.output.announce_failure(self.task)
+            await self.output.why_failed(self.task, self.messages[-1].content)
             print(
                 f"\033[32m****Action Agent human message****\n{self.messages[-1].content}\033[0m"
             )
+
         return self.messages, 0, done, info
 
-    def rollout(self, *, task, context, reset_env=True):
+    async def rollout(self, *, task, context, reset_env=True):
         self.reset(task=task, context=context, reset_env=reset_env)
         while True:
-            messages, reward, done, info = self.step()
+            messages, reward, done, info = await self.step()
             if done:
                 break
         return messages, reward, done, info
 
-    def learn(self, reset_env=True):
+    async def learn(self, reset_env=True):
         print(f"\033[32m===Starting learning process===\033[0m")
-        
+
         try:
             if self.resume:
-                # keep the inventory
                 self.env.reset(
                     options={
                         "mode": "soft",
@@ -315,7 +346,6 @@ class Voyager:
                     }
                 )
             else:
-                # clear the inventory
                 self.env.reset(
                     options={
                         "mode": "hard",
@@ -323,71 +353,89 @@ class Voyager:
                     }
                 )
                 self.resume = True
+
             self.last_events = self.env.step("")
         except RuntimeError as e:
             if "Minecraft server reply with code 400" in str(e):
                 print(f"\033[31m===Minecraft Connection Error===\033[0m")
                 print(f"\033[31mError: {e}\033[0m")
                 print(f"\033[31mThis error typically means:\033[0m")
-                print(f"\033[31m1. Minecraft server is not running on port {self.env.mc_port}\033[0m")
-                print(f"\033[31m2. Minecraft server is not properly configured for Voyager\033[0m")
-                print(f"\033[31m3. Mineflayer bot cannot connect to the Minecraft world\033[0m")
-                print(f"\033[31m\nPlease check:\033[0m")
-                print(f"\033[31m- Is Minecraft running and a world is open?\033[0m")
-                print(f"\033[31m- Is the world set to Creative mode and Peaceful difficulty?\033[0m")
-                print(f"\033[31m- Is 'Open to LAN' enabled with cheats ON?\033[0m")
-                print(f"\033[31m- Is the correct port number ({self.env.mc_port}) being used?\033[0m")
-                print(f"\033[31m\nSee installation/minecraft_instance_install.md for setup instructions.\033[0m")
+                print(
+                    f"\033[31m1. Minecraft server is not running on port {self.env.mc_port}\033[0m"
+                )
+                print(
+                    f"\033[31m2. Minecraft server is not properly configured for Voyager\033[0m"
+                )
+                print(
+                    f"\033[31m3. Mineflayer bot cannot connect to the Minecraft world\033[0m"
+                )
                 return
             else:
                 print(f"\033[31mUnexpected error during environment reset: {e}\033[0m")
                 return
         except Exception as e:
-            print(f"\033[31mUnexpected error during environment initialization: {e}\033[0m")
+            print(
+                f"\033[31mUnexpected error during environment initialization: {e}\033[0m"
+            )
             return
 
         while True:
             if self.recorder.iteration > self.max_iterations:
                 print("Iteration limit reached")
                 break
+
             task, context = self.curriculum_agent.propose_next_task(
                 events=self.last_events,
                 chest_observation=self.action_agent.render_chest_observation(),
                 max_retries=5,
             )
+
             print(
                 f"\033[35mStarting task {task} for at most {self.action_agent_task_max_retries} times\033[0m"
             )
+
             try:
-                messages, reward, done, info = self.rollout(
+                messages, reward, done, info = await self.rollout(
                     task=task,
                     context=context,
                     reset_env=reset_env,
                 )
             except Exception as e:
-                time.sleep(3)  # wait for mineflayer to exit
+                await asyncio.sleep(3)
                 info = {
                     "task": task,
                     "success": False,
                 }
-                # reset bot status here
-                self.last_events = self.env.reset(
-                    options={
-                        "mode": "hard",
-                        "wait_ticks": self.env_wait_ticks,
-                        "inventory": self.last_events[-1][1]["inventory"],
-                        "equipment": self.last_events[-1][1]["status"]["equipment"],
-                        "position": self.last_events[-1][1]["status"]["position"],
-                    }
-                )
-                # use red color background to print the error
+                if self.last_events:
+                    self.last_events = self.env.reset(
+                        options={
+                            "mode": "hard",
+                            "wait_ticks": self.env_wait_ticks,
+                            "inventory": self.last_events[-1][1]["inventory"],
+                            "equipment": self.last_events[-1][1]["status"]["equipment"],
+                            "position": self.last_events[-1][1]["status"]["position"],
+                        }
+                    )
+                else:
+                    print("[WARN] last_events is empty. Resetting environment with mode='hard'.")
+                    self.last_events = self.env.reset(
+                        options={
+                            "mode": "hard",
+                            "wait_ticks": self.env_wait_ticks,
+                        }
+                    )
                 print("Your last round rollout terminated due to error:")
                 print(f"\033[41m{e}\033[0m")
 
             if info["success"]:
+                await self.output.announce_success(self.task)
                 self.skill_manager.add_new_skill(info)
 
+            print(f"[DEBUG] progress before = {self.curriculum_agent.progress}")
             self.curriculum_agent.update_exploration_progress(info)
+            print(f"[DEBUG] progress after  = {self.curriculum_agent.progress}")
+            print(f"[DEBUG] Expected task: {task}")
+            print(f"[DEBUG] Completed task from info: {info['task']}")
             print(
                 f"\033[35mCompleted tasks: {', '.join(self.curriculum_agent.completed_tasks)}\033[0m"
             )
@@ -401,7 +449,7 @@ class Voyager:
             "skills": self.skill_manager.skills,
         }
 
-    def decompose_task(self, task):
+    async def decompose_task(self, task):
         if not self.last_events:
             self.last_events = self.env.reset(
                 options={
@@ -411,11 +459,16 @@ class Voyager:
             )
         return self.curriculum_agent.decompose_task(task, self.last_events)
 
-    def inference(self, task=None, sub_goals=[], reset_mode="hard", reset_env=True):
+    async def inference(
+        self, task=None, sub_goals=[], reset_mode="hard", reset_env=True
+    ):
         if not task and not sub_goals:
             raise ValueError("Either task or sub_goals must be provided")
+
         if not sub_goals:
-            sub_goals = self.decompose_task(task)
+            sub_goals = await self.decompose_task(task)
+            print(f"[DEBUG] Sub-goals: {sub_goals}")
+
         self.env.reset(
             options={
                 "mode": reset_mode,
@@ -425,18 +478,23 @@ class Voyager:
         self.curriculum_agent.completed_tasks = []
         self.curriculum_agent.failed_tasks = []
         self.last_events = self.env.step("")
+
         while self.curriculum_agent.progress < len(sub_goals):
             next_task = sub_goals[self.curriculum_agent.progress]
             context = self.curriculum_agent.get_task_context(next_task)
             print(
                 f"\033[35mStarting task {next_task} for at most {self.action_agent_task_max_retries} times\033[0m"
             )
-            messages, reward, done, info = self.rollout(
+            messages, reward, done, info = await self.rollout(
                 task=next_task,
                 context=context,
                 reset_env=reset_env,
             )
+            print(f"[DEBUG] progress before = {self.curriculum_agent.progress}")
             self.curriculum_agent.update_exploration_progress(info)
+            print(f"[DEBUG] progress after  = {self.curriculum_agent.progress}")
+            print(f"[DEBUG] Expected task: {sub_goals[self.curriculum_agent.progress]}")
+            print(f"[DEBUG] Completed task from info: {info['task']}")
             print(
                 f"\033[35mCompleted tasks: {', '.join(self.curriculum_agent.completed_tasks)}\033[0m"
             )
